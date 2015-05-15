@@ -32,15 +32,15 @@ var noop = function(){};
 Forms = {
 	_validators: {}
 	, _ruleSets: {}
-	, _conversions: {}
+	, _converters: {}
 };
 
 Forms.validators = function(validators){
 	_.extend(this._validators, validators);
 };
 
-Forms.conversions = function(conversions){
-	_.extend(this._conversions, conversions);
+Forms.converters = function(converters){
+	_.extend(this._converters, converters);
 };
 
 Forms.ruleSet = function(name, rules){
@@ -68,21 +68,23 @@ Forms.mixin = function(template, config){
 				// XXX this requires all form ids to be unique
 				// across the app if they are going to have
 				// different rulesets... not excellent
+				// instead we should store passed in ruleSets
+				// on the template instance and lookup there first
 				Forms.ruleSet(key, value);
 			}
 		});
 
 		self.formData = function (formSelector) {
-			// XXX run any conversions
+			// XXX run any converters
 			return self._formData[formSelector];
 		};
 
 		self.setValue = function (formSelector, fieldName, value) {
 			var ruleSet = Forms._ruleSets[formSelector];
-			if(_.isFunction(ruleset[fieldName].convert)){
+			if(_.isFunction(ruleSet[fieldName].convert)){
 				value = ruleSet[fieldName].convert(value);
 			}else if(_.isString(ruleSet[fieldName].convert)){
-				value = Forms._conversions[ruleSet[fieldName].convert](value);
+				value = Forms._converters[ruleSet[fieldName].convert](value);
 			}
 			self._formData[formSelector][fieldName] = value;
 		};

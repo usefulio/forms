@@ -1,4 +1,4 @@
-Forms.conversions({
+Forms.converters({
 	string: function(value){
 		return ''+value;
 	}
