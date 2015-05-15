@@ -29,6 +29,10 @@
 
 var noop = function(){};
 
+// these keys are not strict validators, but can
+// be specified on a "schema" definition
+var specialKeys = ['convert'];
+
 Forms = {
 	_validators: {}
 	, _ruleSets: {}
@@ -111,7 +115,7 @@ Forms.mixin = function(template, config){
 
 			_.each(data, function(value, key){
 				// look up the validations to be run
-				_.each(ruleSet[key], function(options, ruleName){
+				_.each(_.omit(ruleSet[key], specialKeys), function(options, ruleName){
 				// run the validations and set the errors.
 					var context = {
 						value: value
