@@ -32,10 +32,15 @@ var noop = function(){};
 Forms = {
 	_validators: {}
 	, _ruleSets: {}
+	, _conversions: {}
 };
 
 Forms.validators = function(validators){
 	_.extend(this._validators, validators);
+};
+
+Forms.conversions = function(conversions){
+	_.extend(this._conversions, conversions);
 };
 
 Forms.ruleSet = function(name, rules){
@@ -73,6 +78,12 @@ Forms.mixin = function(template, config){
 		};
 
 		self.setValue = function (formSelector, fieldName, value) {
+			var ruleSet = Forms._ruleSets[formSelector];
+			if(_.isFunction(ruleset[fieldName].convert)){
+				value = ruleSet[fieldName].convert(value);
+			}else if(_.isString(ruleSet[fieldName].convert)){
+				value = Forms._conversions[ruleSet[fieldName].convert](value);
+			}
 			self._formData[formSelector][fieldName] = value;
 		};
 
