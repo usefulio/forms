@@ -81,10 +81,12 @@ Forms.mixin = function(template, config){
 
 		self.setValue = function (formSelector, fieldName, value) {
 			var ruleSet = Forms._ruleSets[formSelector];
-			if(_.isFunction(ruleSet[fieldName].convert)){
-				value = ruleSet[fieldName].convert(value);
-			}else if(_.isString(ruleSet[fieldName].convert)){
-				value = Forms._converters[ruleSet[fieldName].convert](value);
+			if(ruleSet[fieldName]){
+				if(_.isFunction(ruleSet[fieldName].convert)){
+					value = ruleSet[fieldName].convert(value);
+				}else if(_.isString(ruleSet[fieldName].convert)){
+					value = Forms._converters[ruleSet[fieldName].convert](value);
+				}
 			}
 			self._formData[formSelector][fieldName] = value;
 		};
