@@ -211,6 +211,11 @@ Forms.mixin = function(template, config){
 			// if(formSelector){ selector.form = formSelector; }
 			return Template.instance()._errors.find(selector);
 		}
+		, errorFor: function (fieldName, formSelector) {
+			var selector = { field: fieldName };
+			// if(formSelector){ selector.form = formSelector; }
+			return Template.instance()._errors.findOne(selector);
+		}
 		, errors: function (formSelector) {
 			return Template.instance().errors().find({form: formSelector});
 		}
