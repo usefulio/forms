@@ -1,7 +1,7 @@
-Template.registerHelper("checkboxIsOn", function(value){
-	return value === true || value === "on";
+Template.registerHelper("checked", function(value, defaultValue){
+	return value === true || value === "on" || defaultValue === true ? "checked" : "";
 });
 
-Template.registerHelper("optionIsSelected", function(value, desiredValue){
-	return value === desiredValue;
+Template.registerHelper("selected", function(value, desiredValue){
+	return value === desiredValue ? "selected" : "";
 });
