@@ -31,7 +31,7 @@ var noop = function(){};
 
 // these keys are not strict validators, but can
 // be specified on a "schema" definition
-var specialKeys = ['convert'];
+var specialKeys = ['convert', 'message'];
 
 Forms = {
 	_validators: {}
@@ -134,6 +134,7 @@ Forms.mixin = function(template, config){
 							, field: key
 							, error: ruleName
 							, value: value
+							, message: ruleSet[key].message
 						}, noop);
 					}
 				});
