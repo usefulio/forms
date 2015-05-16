@@ -40,16 +40,16 @@ Forms.validators({
 		return valid;
 	}
 	, minLength: function(context){
-		return _.isString(context.value) && context.value.length >= length;
+		return _.isString(context.value) && context.value.length >= context.options;
 	}
 	, maxLength: function(context){
-		return _.isString(context.value) && context.value.length <= length;
+		return _.isString(context.value) && context.value.length <= context.options;
 	}
 	, minCount: function(context){
-		return _.isArray(context.value) && context.value.length >= length;
+		return _.isArray(context.value) && context.value.length >= context.options;
 	}
 	, maxCount: function(context){
-		return _.isArray(context.value) && context.value.length <= length;
+		return _.isArray(context.value) && context.value.length <= context.options;
 	}
 	, regex: function(context){
 		// can take a regex or { pattern: "asdf", flags: "i" } or an array of either
