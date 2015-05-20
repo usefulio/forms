@@ -17,11 +17,7 @@
  * The forms mixin and related helpers should provide these properties:
  * doc - the current document (e.g. the doc, or a sub-document)
  * name - the current property (e.g. 'firstName', or 'profile')
- * value - the current value (the same as this.doc[this.name]. e.g. 'George', or {})
- *         can be the same as doc, if name is null (e.g. at the form's top level)
  * schema - the schema for the current document
- * validator - the schema for the current property
- *             can be the same as schema at the top level
  * config - an object with misc options (e.g. auto-submit)
  * others - this list is extendable, you can use mixins/onCreated functions to extend
  * these helpers
@@ -71,6 +67,28 @@
  */
 
 Forms = {};
+
+Forms.submit = function (e, tmpl) {
+  var doc = tmpl.doc.get() || {};
+  var schema = tmpl.data && tmpl.data.schema;
+  var isValid = true;
+
+  if (schema && typeof schema.validate === "function")
+    isValid = Schema.validate(doc, schema);
+
+  var newEvent;
+  if (isValid !== true) {
+    e.validationErrors = isValid;
+    newEvent = $.Event('documentInvalid');
+    newEvent.validationErrors = isValid;
+  } else {
+    newEvent = $.Event('documentSubmit');
+  }
+
+  newEvent.doc = tmpl.doc.get() || {};
+  newEvent.sourceEvent = e;
+  $(e.currentTarget).trigger(newEvent);
+};
 
 Forms.mixin = function (template) {
   template.events({
@@ -147,11 +165,7 @@ Forms.formMixin = function (template) {
         return;
       e.preventDefault();
 
-      // XXX validate current value
-      var documentSubmit = $.Event('documentSubmit');
-      documentSubmit.doc = tmpl.doc.get() || {};
-      documentSubmit.sourceEvent = e;
-      $(e.currentTarget).trigger(documentSubmit);
+      Forms.submit(e, tmpl);
     }
   });
 

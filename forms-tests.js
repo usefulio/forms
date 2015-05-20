@@ -73,6 +73,19 @@ Tinytest.add('Forms - change event', function (test) {
   test.equal(eventDidFire, true);
 });
 
+Tinytest.add('Forms - documentInvalid event', function (test) {
+  var div = makeForm(null, {schema: {validate: function () {return false;}}})
+    , eventDidFire = false;
+
+  div.on('documentInvalid', function (e) {
+    test.equal(e.doc, {});
+    eventDidFire = true;
+  });
+  div.find('form').trigger('submit');
+
+  test.equal(eventDidFire, true);
+});
+
 Tinytest.add('Forms - nested change event', function (test) {
   var div = makeForm('nestedForm')
     , eventDidFire = false;
@@ -91,4 +104,15 @@ Tinytest.add('Forms - nested change event', function (test) {
   test.equal(eventDidFire, true);
 });
 
+Tinytest.add('Forms - documentSubmit event not fired when doc is invalid', function (test) {
+  var div = makeForm(null, {schema: {validate: function () {return false;}}})
+    , eventDidFire = false;
 
+  div.on('documentSubmit', function (e) {
+    test.equal(e.doc, {});
+    eventDidFire = true;
+  });
+  div.find('form').trigger('submit');
+
+  test.equal(eventDidFire, false);
+});
