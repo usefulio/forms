@@ -190,3 +190,36 @@ Forms.subDocMixin = function (template) {
     }
   });  
 };
+
+Forms.arrayItemMixin = function (template) {
+  template.events({
+    'documentChange': function (e, tmpl) {
+      if (e.isDefaultPrevented())
+        return;
+
+      tmpl.data.doc = tmpl.data.doc || [];
+      tmpl.data.doc[tmpl.data.index] = e.doc;
+      e.doc = tmpl.data.doc;
+    }
+  });
+
+  template.helpers({
+    doc: function () {
+      return (this.doc || [])[this.index];
+    }
+  });  
+};
+
+Forms.arrayEachMixin = function (template) {
+  template.helpers({
+    items: function () {
+      var items = this.doc;
+      return _.map(items, function (a, i) {
+        return {
+          doc: items
+          , index: i
+        };
+      });
+    }
+  });
+};

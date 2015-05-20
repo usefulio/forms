@@ -1,7 +1,10 @@
 // Setup
 Forms.formMixin(Template.nestedForm);
+Forms.formMixin(Template.arrayForm);
 Forms.formMixin(Template.simpleForm);
 Forms.subDocMixin(Template.subdoc);
+Forms.arrayItemMixin(Template.arrayitem);
+Forms.arrayEachMixin(Template.arrayeach);
 
 // Untils
 function makeForm(formName, options) {
@@ -95,6 +98,24 @@ Tinytest.add('Forms - nested change event', function (test) {
       profile: {
         firstName: "joe"
       }
+    });
+    eventDidFire = true;
+  });
+  div.find('input').val('joe');
+  div.find('input').trigger('change');
+
+  test.equal(eventDidFire, true);
+});
+
+Tinytest.add('Forms - array change event', function (test) {
+  var div = makeForm('arrayForm', {doc: {users: [{}]}})
+    , eventDidFire = false;
+
+  div.on('documentChange', function (e) {
+    test.equal(e.doc, {
+      users: [{
+        firstName: "joe"
+      }]
     });
     eventDidFire = true;
   });

@@ -2,6 +2,20 @@
   {{>Template.contentBlock doc=doc schema=schema}}
 </template>
 
+<template name="arrayitem">
+    {{>Template.contentBlock doc=doc schema=schema}}
+</template>
+
+<template name="arrayeach">
+  {{#subdoc this}}
+    {{#each items}}
+      {{#arrayitem this}}
+        {{> Template.contentBlock this}}
+      {{/arrayitem}}
+    {{/each}}
+  {{/subdoc}}
+</template>
+
 <template name="simpleForm">
   <form>
     <input name="firstName" value="{{doc.firstName}}">
@@ -13,5 +27,13 @@
     {{#subdoc name="profile" doc=doc}}
       <input name="firstName" value="{{doc.firstName}}">
     {{/subdoc}}
+  </form>
+</template>
+
+<template name="arrayForm">
+  <form>
+    {{#arrayeach name="users" doc=doc}}
+      <input name="firstName" value="{{doc.firstName}}">
+    {{/arrayeach}}
   </form>
 </template>
