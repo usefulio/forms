@@ -172,7 +172,7 @@ Forms.subDocMixin = function (template) {
 
   template.helpers({
     doc: function () {
-      return this.doc[this.name];
+      return (this.doc || {})[this.name];
     }
   });  
 };

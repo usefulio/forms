@@ -1,5 +1,17 @@
+<template name="subdoc">
+  {{>Template.contentBlock doc=doc schema=schema}}
+</template>
+
 <template name="simpleForm">
   <form>
     <input name="firstName" value="{{doc.firstName}}">
+  </form>
+</template>
+
+<template name="nestedForm">
+  <form>
+    {{#subdoc name="profile" doc=doc}}
+      <input name="firstName" value="{{doc.firstName}}">
+    {{/subdoc}}
   </form>
 </template>
