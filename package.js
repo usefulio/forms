@@ -33,10 +33,6 @@ Package.onUse(function(api) {
 	// ====== CLIENT =======
 
 	api.addFiles('forms.js', 'client');
-	api.addFiles('validators.js', 'client');
-	api.addFiles('regexps.js', 'client');
-	api.addFiles('converters.js', 'client');
-	api.addFiles('helpers.js', 'client');
 
 	// ====== EXPORTS =======
 
@@ -44,5 +40,17 @@ Package.onUse(function(api) {
 });
 
 Package.onTest(function(api) {
-	api.use('tinytest');
+	api.use([
+		'tinytest'
+		, 'underscore'
+		, 'jquery'
+	]);
+	api.use('templating');
+
+	api.use('useful:forms');
+
+	api.addFiles([
+		'forms-tests.html'
+		, 'forms-tests.js'
+	], 'client');
 });

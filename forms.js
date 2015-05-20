@@ -1,225 +1,178 @@
-// I want to specify the fields to be validated
-// and I don't want to use callbacks
+/*
+ * Forms - What I want
+ * ==========
+ *
+ * I want a reactive form that handles:
+ *  - validation with or without schemas
+ *  - deeply nested objects and arrays
+ *  - conflicts between the outer reactive context and the current state
+ *
+ * I want to be able to use templates, or not, as I please
+ * I want to be able to access the validation/schema/etc. context
+ *
+ *
+ * Forms - api
+ * ==========
+ *
+ * The forms mixin and related helpers should provide these properties:
+ * doc - the current document (e.g. the doc, or a sub-document)
+ * name - the current property (e.g. 'firstName', or 'profile')
+ * value - the current value (the same as this.doc[this.name]. e.g. 'George', or {})
+ *         can be the same as doc, if name is null (e.g. at the form's top level)
+ * schema - the schema for the current document
+ * validator - the schema for the current property
+ *             can be the same as schema at the top level
+ * config - an object with misc options (e.g. auto-submit)
+ * others - this list is extendable, you can use mixins/onCreated functions to extend
+ * these helpers
+ *
+ * Forms - events
+ * =========
+ *
+ * The forms mixin and related helpers should trigger/handle these events:
+ * propertyChange - a child property has changed
+ *     .propertyValue - the value which was changed, generally speaking this value should === this.doc
+ *     .propartyName - the name of the property which was changed
+ *
+ *     custom forms and sub-document templates should handle this event in order to modify the current
+ *     custom input templates should trigger this event to signal a change in the user-entered value
+ *
+ *     if you handle this event (e.g. assign propertyValue to doc[propartyName]) you should call e.preventDefault()
+ *     you should not handle this event if e.defaultPrevented() = true;
+ *
+ *     this event fires regardless of validation
+ *
+ * documentChange - a form document has changed, including sub-documents
+ *     .doc - the value which was changed, generally speaking this value should === this.doc
+ *     .validationErrors - null or an array of errors.
+ *
+ *     custom validation can use e.pushValidationError(error) to log an error and prevent documentSubmit
+ *     from firing, you can also use e.preventDefault to prevent documentSubmit from firing for some other reason.
+ *
+ *     this event fires regardless of validation
+ *     this event fires regardless of whether the form was submitted
+ *
+ * documentSubmit - a form document has been submitted, and is valid
+ *     .doc - an object containing all submitted input
+ *     .sourceEvent - the event which triggered submit (generally a native submit event, or documentChange, if auto-submit is enabled)
+ *
+ *     perform your submit action here, e.g. insert or update
+ *
+ *     this event fires only if the document is valid
+ *     
+ * documentInvalid - a form document has been submitted, and is invalid
+ *     .doc
+ *     .sourceEvent
+ *     .validationErrors
+ *
+ *     perform custom validation handling here
+ *
+ *     this event fires only if the document is not valid
+ */
 
-// I want to specify validation triggers
+Forms = {};
 
-// I want to be able to get errors back out reactively
+Forms.mixin = function (template) {
+  template.events({
+    'change, propertyChange': function (e, tmpl) {
+      if (e.isDefaultPrevented())
+        return;
+      e.preventDefault();
 
-// I'M NOT CHECKING THAT I WROTE THE FORM CORRECTLY
-// > I JUST WANT TO MAKE SURE THAT THE USER ENTERED
-// > VALID INPUT BEFORE SAVING IT TO THE DATABASE!!!!
+      var propertyName = e.currentTarget.name;
+      var propertyValue = e.currentTarget.value;
 
-// So, let's specify what makes a field valid instead
-// of what makes a document valid and then look at 
-// what inputs are in the form we are managing and validate
-// against that!
+      if (typeof e.propertyName !== "undefined" || e.type !== 'change') {
+        propertyName = e.propertyName;
+      }
+      if (typeof e.propertyValue !== "undefined" || e.type !== 'change') {
+        propertyValue = e.propertyValue;
+      }
 
-// provide comprehensive validations, including regexs
+      if (propertyName) {
+        var doc = this.doc || {};
+        doc[propertyName] = propertyValue;
 
-// support fromForm
+        var documentChange = $.Event('documentChange');
+        documentChange.doc = doc;
 
-// support document defaults?
-
-// support auto-save, auto-insert, auto-update
-
-// Document cleanup/conversion should happen separately
-// in before hooks. That's a different package.
-
-// super easy to override/customize
-
-var noop = function(){};
-
-// these keys are not strict validators, but can
-// be specified on a "schema" definition
-var specialKeys = ['convert', 'message'];
-
-Forms = {
-	_validators: {}
-	, _ruleSets: {}
-	, _converters: {}
+        $(e.currentTarget).trigger(documentChange);
+      }
+    }
+  });
 };
 
-Forms.validators = function(validators){
-	_.extend(this._validators, validators);
+Forms.formMixin = function (template) {
+  template.onCreated(function () {
+    var tmpl = this;
+    tmpl.doc = new ReactiveVar();
+    // tmpl.schema = new ReactiveVar();
+
+    // XXX store dirty state
+    // XXX store form validation state
+
+    tmpl.autorun(function () {
+      var data = Template.currentData();
+
+      // XXX handle dirty state
+      if (data) {
+        tmpl.doc.set(data.doc);
+        // tmpl.schema.set(data.schema);
+      }
+    });
+  });
+
+  template.helpers({
+    doc: function () {
+      var tmpl = Template.instance();
+      return tmpl.doc.get();
+    }
+  });
+
+  template.events({
+    'documentChange': function (e, tmpl) {
+      if (e.isDefaultPrevented())
+        return;
+      e.preventDefault();
+
+      tmpl.doc.set(e.doc);
+
+      // XXX auto-submit
+      // XXX reset error state
+      // XXX log errors
+      // XXX auto-submit
+    }
+    , 'submit form': function (e, tmpl) {
+      if (e.isDefaultPrevented())
+        return;
+      e.preventDefault();
+
+      // XXX validate current value
+      var documentSubmit = $.Event('documentSubmit');
+      documentSubmit.doc = tmpl.doc.get() || {};
+      documentSubmit.sourceEvent = e;
+      $(e.currentTarget).trigger(documentSubmit);
+    }
+  });
+
+  Forms.mixin(template);
 };
 
-Forms.converters = function(converters){
-	_.extend(this._converters, converters);
-};
+Forms.subDocMixin = function (template) {
+  template.events({
+    'documentChange': function (e, tmpl) {
+      if (e.isDefaultPrevented())
+        return;
 
-Forms.ruleSet = function(name, rules){
-	// XXX be able to mix together multiple rulesets
-	// under the same name? E.g. mix standard rulesets
-	this._ruleSets[name] = rules;
-};
+      tmpl.data.doc = tmpl.data.doc || {};
+      tmpl.data.doc[tmpl.data.name] = e.doc;
+      e.doc = tmpl.data.doc;
+    }
+  });
 
-Forms.mixin = function(template, config){
-
-	template.onCreated(function(){
-		var self = this;
-		self._errors = new Mongo.Collection(null);
-		self._formData = {};
-		self._config = config;
-
-		_.each(config, function(value, key){
-			// init the form data
-			self._formData[key] = {};
-
-			if(_.isString(value)){
-				// named ruleset
-				Forms._ruleSets[key] = Forms._ruleSets[value];
-			}else{
-				// XXX this requires all form ids to be unique
-				// across the app if they are going to have
-				// different rulesets... not excellent
-				// instead we should store passed in ruleSets
-				// on the template instance and lookup there first
-				Forms.ruleSet(key, value);
-			}
-		});
-
-		self.formData = function (formSelector) {
-			// XXX run any converters
-			return self._formData[formSelector];
-		};
-
-		self.setValue = function (formSelector, fieldName, value) {
-			var ruleSet = Forms._ruleSets[formSelector];
-			if(ruleSet[fieldName]){
-				if(_.isFunction(ruleSet[fieldName].convert)){
-					value = ruleSet[fieldName].convert(value);
-				}else if(_.isString(ruleSet[fieldName].convert)){
-					value = Forms._converters[ruleSet[fieldName].convert](value);
-				}
-			}
-			self._formData[formSelector][fieldName] = value;
-		};
-
-		self.toggleValue = function (formSelector, fieldName, value) {
-			var values = self._formData[formSelector][fieldName] || []
-				, currentIndex = values.indexOf(value);
-			if(currentIndex === -1){
-				values.push(value);
-			}else{
-				values.splice(currentIndex, 1);
-			}
-			self.setValue(formSelector, fieldName, values);
-		};
-
-		self.validate = function (formSelector) {
-			// get the data and rules for the form
-			var data = self._formData[formSelector]
-				, ruleSet = Forms._ruleSets[formSelector];
-
-			self.errors().remove({}, noop);
-
-			_.each(data, function(value, key){
-				// look up the validations to be run
-				_.each(_.omit(ruleSet[key], specialKeys), function(options, ruleName){
-				// run the validations and set the errors.
-					var context = {
-						value: value
-						, fieldName: key
-						, options: options
-						, values: data
-						, validators: Forms._validators
-					};
-					if(!Forms._validators[ruleName](context)){
-						self._errors.upsert({
-							form: formSelector
-							, field: key
-						}
-						, {
-							form: formSelector
-							, field: key
-							, error: ruleName
-							, value: value
-							, message: ruleSet[key].message
-						}, noop);
-					}
-				});
-			});
-
-			return self.isValid();
-		};
-
-		self.isValid = function (formSelector) {
-			return self.errors().find({form: formSelector}).count() === 0;
-		}
-
-		self.errors = function () {
-			return self._errors;
-		};
-
-		self.reset = function (formSelector) {
-			self.$(formSelector).reset();
-		};
-
-		self.getValueFromElement = function(formSelector, el){
-			var $el = $(el);
-
-			if($el.attr('name')){
-				if($el.attr('type') === 'checkbox'){
-					if($el.attr('value')){
-						self.toggleValue(formSelector, $el.attr('name'), $el.attr('value'));
-					}else{
-						self.setValue(formSelector, $el.attr('name'), el.checked);
-					}
-				}else{
-					self.setValue(formSelector, $el.attr('name'), el.value);
-				}
-			}
-		};
-	});
-
-	template.onRendered(function(){
-		var self = this;
-		_.each(self._formData, function(value, key){
-			// extract initial form data
-			self.$([
-				key + ' input[name]'
-				, key + ' textarea[name]'
-				, key + ' select[name]'
-			].join(', ')).each(function(index, el){
-				self.getValueFromElement(key, el);
-			});
-		});
-	});
-
-
-	var submitHandlers = {}
-	_.each(config, function(value, key){
-		submitHandlers['submit ' + key] = function (e, tmpl) {
-			e.preventDefault();
-			tmpl.validate(key);
-		}
-	});
-	template.events(submitHandlers);
-
-	var changeHandlers = {};
-	_.each(config, function(value, key){
-		changeHandlers['change ' + key] = function(e, tmpl) {
-			tmpl.getValueFromElement(key, e.target);
-		};
-		return changeHandlers;
-	});
-	template.events(changeHandlers);
-
-	template.helpers({
-		errorsFor: function (fieldName, formSelector) {
-			var selector = { field: fieldName };
-			// if(formSelector){ selector.form = formSelector; }
-			return Template.instance()._errors.find(selector);
-		}
-		, errorFor: function (fieldName, formSelector) {
-			var selector = { field: fieldName };
-			// if(formSelector){ selector.form = formSelector; }
-			var error = Template.instance()._errors.findOne(selector)
-			return error ? error.message : '';
-		}
-		, errors: function (formSelector) {
-			return Template.instance().errors().find({form: formSelector});
-		}
-	});
-
+  template.helpers({
+    doc: function () {
+      return this.doc[this.name];
+    }
+  });  
 };
