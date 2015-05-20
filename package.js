@@ -33,10 +33,13 @@ Package.onUse(function(api) {
 	// ====== CLIENT =======
 
 	api.addFiles('forms.js', 'client');
+	api.addFiles('schema.js', ['client', 'server']);
 
 	// ====== EXPORTS =======
 
 	api.export('Forms');
+	api.export('Schema');
+	api.export('Validator');
 });
 
 Package.onTest(function(api) {
@@ -53,4 +56,8 @@ Package.onTest(function(api) {
 		'forms-tests.html'
 		, 'forms-tests.js'
 	], 'client');
+
+	api.addFiles([
+		'schema-tests.js'
+	], ['client', 'server']);
 });
