@@ -28,12 +28,16 @@ Package.onUse(function(api) {
 
 	// ====== BOTH =======
 
+	api.addFiles('schema.js', ['client', 'server']);
+
 	// ====== SERVER =======
 
 	// ====== CLIENT =======
 
-	api.addFiles('forms.js', 'client');
-	api.addFiles('schema.js', ['client', 'server']);
+	api.addFiles([
+		'forms.html'
+		, 'forms.js'
+	], 'client');
 
 	// ====== EXPORTS =======
 

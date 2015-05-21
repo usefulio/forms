@@ -1,27 +1,3 @@
-<template name="field">
-  {{> Template.contentBlock context}}
-</template>
-
-<template name="subdoc">
-  {{>Template.contentBlock doc=doc schema=schema error=error}}
-</template>
-
-<template name="arrayitem">
-    {{>Template.contentBlock doc=doc schema=schema error=error}}
-</template>
-
-<template name="arrayeach">
-  {{#with ..}}
-    {{#subdoc ..}}
-      {{#each items}}
-        {{#arrayitem this}}
-          {{> Template.contentBlock doc=doc schema=schema error=error}}
-        {{/arrayitem}}
-      {{/each}}
-    {{/subdoc}}
-  {{/with}}
-</template>
-
 <template name="simpleForm">
   <form>
     <input name="firstName" value="{{doc.firstName}}">
@@ -59,4 +35,8 @@
       {{/if}}
     {{/arrayeach}}
   </form>
+</template>
+
+<template name="field">
+  {{> Template.contentBlock context}}
 </template>

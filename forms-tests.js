@@ -3,9 +3,6 @@ Forms.formMixin(Template.nestedForm);
 Forms.formMixin(Template.arrayForm);
 Forms.formMixin(Template.simpleForm);
 Forms.formMixin(Template.validationForm);
-Forms.subDocMixin(Template.subdoc);
-Forms.arrayItemMixin(Template.arrayitem);
-Forms.arrayEachMixin(Template.arrayeach);
 Forms.fieldMixin(Template.field);
 
 // Untils

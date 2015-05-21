@@ -279,3 +279,7 @@ Forms.fieldMixin = function (template) {
     }
   });
 };
+
+Forms.subDocMixin(Template.subdoc);
+Forms.arrayItemMixin(Template.arrayitem);
+Forms.arrayEachMixin(Template.arrayeach);
