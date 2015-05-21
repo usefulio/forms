@@ -2,9 +2,11 @@
 Forms.formMixin(Template.nestedForm);
 Forms.formMixin(Template.arrayForm);
 Forms.formMixin(Template.simpleForm);
+Forms.formMixin(Template.validationForm);
 Forms.subDocMixin(Template.subdoc);
 Forms.arrayItemMixin(Template.arrayitem);
 Forms.arrayEachMixin(Template.arrayeach);
+Forms.fieldMixin(Template.field);
 
 // Untils
 function makeForm(formName, options) {
@@ -136,4 +138,17 @@ Tinytest.add('Forms - documentSubmit event not fired when doc is invalid', funct
   div.find('form').trigger('submit');
 
   test.equal(eventDidFire, false);
+});
+
+Tinytest.add('Forms - validation context is available at the field level', function (test) {
+  var div = makeForm('validationForm', {schema: new Schema({
+      firstName: Validator(function () {
+        return false;
+      })
+    })})
+    ;
+
+  div.find('input').trigger('change');
+  
+  test.equal(div.find('.invalid').text(), 'invalid');
 });

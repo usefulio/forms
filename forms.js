@@ -223,3 +223,31 @@ Forms.arrayEachMixin = function (template) {
     }
   });
 };
+
+Forms.fieldMixin = function (template) {
+  template.helpers({
+    context: function () {
+      var parent = Template.parentData();
+      var context = {
+        value: function () {
+          return parent.doc[context.name];
+        }
+        , schema: function () {
+          return Schema.child(parent.schema, context.name);
+        }
+        , error: function () {
+          var schema = context.schema();
+          var valid = true;
+          if (schema)
+            valid = schema.validate(context.value);
+          if (valid === true)
+            return null;
+          else
+            return valid || new Error('invalid');
+        }
+      };
+      _.extend(context, this);
+      return context;
+    }
+  });
+};

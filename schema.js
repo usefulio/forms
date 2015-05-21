@@ -22,6 +22,10 @@ Schema.validate = function (value, validator) {
     throw new Error('Unknow validation type');
 };
 
+Schema.child = function (schema, fieldName) {
+  return schema && schema.childProperties && schema.childProperties[fieldName];
+};
+
 Schema.prototype.validate = function (value) {
   var self = this;
   

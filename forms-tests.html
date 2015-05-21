@@ -1,3 +1,7 @@
+<template name="field">
+  {{> Template.contentBlock context}}
+</template>
+
 <template name="subdoc">
   {{>Template.contentBlock doc=doc schema=schema}}
 </template>
@@ -19,6 +23,17 @@
 <template name="simpleForm">
   <form>
     <input name="firstName" value="{{doc.firstName}}">
+  </form>
+</template>
+
+<template name="validationForm">
+  <form>
+    {{#field name="firstName"}}
+      <input name="firstName" value="{{doc.firstName}}">
+      {{#if error}}
+        <span class="invalid">invalid</span>
+      {{/if}}
+    {{/field}}
   </form>
 </template>
 
