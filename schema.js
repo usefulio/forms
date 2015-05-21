@@ -7,6 +7,15 @@ Schema = function (schemaDefinition, options) {
   _.extend(self, options);
 };
 
+Schema.Array = function (schemaDefinition, options) {
+  if (!(this instanceof Schema.Array))
+    return new Schema.Array(schemaDefinition, options);
+
+  var self = this;
+  self.childValidation = schemaDefinition;
+  _.extend(self, options);
+};
+
 Schema.Error = Meteor.makeErrorType('Schema.Error', function (schema, errors) {
   this.schema = schema;
   this.errors = errors;
@@ -23,7 +32,10 @@ Schema.validate = function (value, validator) {
 };
 
 Schema.child = function (schema, fieldName) {
-  return schema && schema.childProperties && schema.childProperties[fieldName];
+  if (schema instanceof Schema.Array)
+    return schema && schema.childValidation;
+  else
+    return schema && schema.childProperties && schema.childProperties[fieldName];
 };
 
 Schema.prototype.validate = function (value) {
@@ -46,6 +58,29 @@ Schema.prototype.assert = function(value) {
   var result = this.validate(value);
   if (result !== true)
     throw result;
+};
+
+Schema.Array.prototype.validate = function (value) {
+  if (_.isUndefined(value) || _.isNull(value))
+    return true;
+  if (!_.isArray(value))
+    return new Error('not an array');
+
+  var self = this;
+  var errors = _.chain(value)
+    .map(function (a) {
+      return self.childValidation.validate(a);
+    })
+    .filter(function (a) {
+      return a !== true;
+    })
+    .flatten()
+    .value();
+
+  if (errors.length)
+    return new Schema.Error(self, errors);
+  else
+    return true;
 };
 
 Validator = function (validateFn, transformFn, message) {

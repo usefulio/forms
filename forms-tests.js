@@ -152,3 +152,29 @@ Tinytest.add('Forms - validation context is available at the field level', funct
   
   test.equal(div.find('.invalid').text(), 'invalid');
 });
+
+Tinytest.add('Forms - validation context is available at the object level', function (test) {
+  var div = makeForm('nestedForm', {schema: new Schema({
+      profile: Validator(function () {
+        return false;
+      })
+    })})
+    ;
+
+  div.find('input').trigger('change');
+  
+  test.equal(div.find('.invalid').text(), 'invalid');
+});
+
+Tinytest.add('Forms - validation context is available at the array level', function (test) {
+  var div = makeForm('arrayForm',{doc: {users: [{}]}, schema: new Schema({
+      users: Schema.Array(Validator(function () {
+        return false;
+      }))
+    })})
+    ;
+
+  div.find('input').trigger('change');
+  
+  test.equal(div.find('.invalid').text(), 'invalid');
+});

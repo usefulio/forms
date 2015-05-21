@@ -3,21 +3,23 @@
 </template>
 
 <template name="subdoc">
-  {{>Template.contentBlock doc=doc schema=schema}}
+  {{>Template.contentBlock doc=doc schema=schema error=error}}
 </template>
 
 <template name="arrayitem">
-    {{>Template.contentBlock doc=doc schema=schema}}
+    {{>Template.contentBlock doc=doc schema=schema error=error}}
 </template>
 
 <template name="arrayeach">
-  {{#subdoc this}}
-    {{#each items}}
-      {{#arrayitem this}}
-        {{> Template.contentBlock this}}
-      {{/arrayitem}}
-    {{/each}}
-  {{/subdoc}}
+  {{#with ..}}
+    {{#subdoc ..}}
+      {{#each items}}
+        {{#arrayitem this}}
+          {{> Template.contentBlock doc=doc schema=schema error=error}}
+        {{/arrayitem}}
+      {{/each}}
+    {{/subdoc}}
+  {{/with}}
 </template>
 
 <template name="simpleForm">
@@ -39,16 +41,22 @@
 
 <template name="nestedForm">
   <form>
-    {{#subdoc name="profile" doc=doc}}
+    {{#subdoc name="profile"}}
       <input name="firstName" value="{{doc.firstName}}">
+      {{#if error}}
+        <span class="invalid">invalid</span>
+      {{/if}}
     {{/subdoc}}
   </form>
 </template>
 
 <template name="arrayForm">
   <form>
-    {{#arrayeach name="users" doc=doc}}
+    {{#arrayeach name="users"}}
       <input name="firstName" value="{{doc.firstName}}">
+      {{#if error}}
+        <span class="invalid">invalid</span>
+      {{/if}}
     {{/arrayeach}}
   </form>
 </template>

@@ -186,7 +186,24 @@ Forms.subDocMixin = function (template) {
 
   template.helpers({
     doc: function () {
-      return (this.doc || {})[this.name];
+      var outer = Template.parentData();
+      return (outer.doc || {})[this.name];
+    }
+    , schema: function () {
+      var outer = Template.parentData();
+      return Schema.child(outer.schema, this.name);
+    }
+    , error: function () {
+      var outer = Template.parentData();
+      var schema = Schema.child(outer.schema, this.name);
+      var doc = (outer.doc || {})[this.name];
+      var valid = true;
+      if (schema)
+        valid = schema.validate(doc);
+      if (valid === true)
+        return null;
+      else
+        return valid || new Error('invalid');
     }
   });  
 };
@@ -207,18 +224,29 @@ Forms.arrayItemMixin = function (template) {
     doc: function () {
       return (this.doc || [])[this.index];
     }
+    , error: function () {
+      var outer = this;
+      var schema = Schema.child(outer.schema, this.index);
+      var doc = (outer.doc || {})[this.name];
+      var valid = true;
+      if (schema)
+        valid = schema.validate(doc);
+      if (valid === true)
+        return null;
+      else
+        return valid || new Error('invalid');
+    }
   });  
 };
 
 Forms.arrayEachMixin = function (template) {
   template.helpers({
     items: function () {
-      var items = this.doc;
-      return _.map(items, function (a, i) {
-        return {
-          doc: items
-          , index: i
-        };
+      var self = this;
+      return _.map(self.doc, function (a, i) {
+        return _.extend({
+          index: i
+        }, self);
       });
     }
   });
