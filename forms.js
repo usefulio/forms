@@ -217,14 +217,14 @@ Forms.events = {
         return;
       e.preventDefault();
 
-      Forms.submit(e, tmpl);
+      Forms.submit.call(this, e, tmpl);
     }
     , 'change, propertyChange': function (e, tmpl) {
       if (e.isDefaultPrevented())
         return;
       e.preventDefault();
 
-      Forms.change(e, tmpl);
+      Forms.change.call(this, e, tmpl);
     }
   }
   , subdoc: {

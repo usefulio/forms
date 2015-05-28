@@ -35,12 +35,13 @@ Tinytest.add('Forms - documentSubmit event', function (test) {
 });
 
 Tinytest.add('Forms - propertyChange event', function (test) {
-  var div = makeForm()
+  var div = makeForm(null, {doc: {lastName: 'sam'}})
     , eventDidFire = false;
 
   div.on('documentChange', function (e) {
     test.equal(e.doc, {
       firstName: "joe"
+      , lastName: 'sam'
     });
     eventDidFire = true;
   });
