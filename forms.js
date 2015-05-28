@@ -255,10 +255,10 @@ Forms.arrayEachMixin = function (template) {
 Forms.fieldMixin = function (template) {
   template.helpers({
     context: function () {
-      var parent = Template.parentData();
+      var parent = Template.parentData() || {};
       var context = {
         value: function () {
-          return parent.doc[context.name];
+          return (parent.doc || {})[context.name];
         }
         , schema: function () {
           return Schema.child(parent.schema, context.name);

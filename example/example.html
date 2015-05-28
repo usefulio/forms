@@ -1,0 +1,21 @@
+<head>
+  <title>example</title>
+</head>
+
+<body>
+  {{> hello}}
+</body>
+
+<template name="hello">
+  <div class="container">
+    <h1>Example Forms!</h1>
+    {{#form}}
+      {{> field name="firstName" title="First Name"}}
+      <div class="text-right">
+        <button class="btn btn-primary" type="submit">
+          Save
+        </button>
+      </div>
+    {{/form}}
+  </div>
+</template>
