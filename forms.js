@@ -91,6 +91,78 @@ Forms.submit = function (e, tmpl) {
   $(e.currentTarget).trigger(newEvent);
 };
 
+Forms.helpers = {
+  form: function () {
+    return _.defaults({
+      doc: Template.instance().doc.get()
+    }, this);
+  }
+};
+
+Forms.events = {
+  form: {
+    'documentChange': function (e, tmpl) {
+      if (e.isDefaultPrevented())
+        return;
+      e.preventDefault();
+
+      tmpl.doc.set(e.doc);
+    }
+    , 'submit form': function (e, tmpl) {
+      if (e.isDefaultPrevented())
+        return;
+      e.preventDefault();
+
+      Forms.submit(e, tmpl);
+    }
+    , 'change, propertyChange': function (e, tmpl) {
+      if (e.isDefaultPrevented())
+        return;
+      e.preventDefault();
+
+      var propertyName = e.currentTarget.name;
+      var propertyValue = e.currentTarget.value;
+
+      if (typeof e.propertyName !== "undefined" || e.type !== 'change') {
+        propertyName = e.propertyName;
+      }
+      if (typeof e.propertyValue !== "undefined" || e.type !== 'change') {
+        propertyValue = e.propertyValue;
+      }
+
+      if (propertyName) {
+        var doc = this.doc || {};
+        doc[propertyName] = propertyValue;
+
+        var documentChange = $.Event('documentChange');
+        documentChange.doc = doc;
+
+        $(e.currentTarget).trigger(documentChange);
+      }
+    }
+  }
+};
+
+Template.form.onCreated(function () {
+    var tmpl = this;
+    tmpl.doc = new ReactiveVar();
+
+    tmpl.autorun(function () {
+      var data = Template.currentData();
+      tmpl.doc.set(data && data.doc);
+    });
+});
+
+Template.form.helpers({
+  context: Forms.helpers.form
+});
+
+Template.form.events(Forms.events.form);
+
+// ======= OLD CODE =======
+
+
+
 Forms.helpers = function (e, tmpl) {
 	return {
 		clear: function () {
@@ -165,11 +237,6 @@ Forms.formMixin = function (template) {
       e.preventDefault();
 
       tmpl.doc.set(e.doc);
-
-      // XXX auto-submit
-      // XXX reset error state
-      // XXX log errors
-      // XXX auto-submit
     }
     , 'submit form': function (e, tmpl) {
       if (e.isDefaultPrevented())

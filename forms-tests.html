@@ -1,7 +1,9 @@
 <template name="simpleForm">
-  <form>
-    <input name="firstName" value="{{doc.firstName}}">
-  </form>
+  {{#form}}
+    <form>
+      <input name="firstName" value="{{doc.firstName}}">
+    </form>
+  {{/form}}
 </template>
 
 <template name="validationForm">
