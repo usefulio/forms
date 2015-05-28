@@ -139,7 +139,10 @@ Tinytest.add('Forms - validation context is available at the document level', fu
     })})
     ;
 
+  div.find('input').val('some value');
   div.find('input').trigger('change');
+
+  Tracker.flush();
   
   test.equal(div.find('.error').text(), 'invalid');
 });
@@ -152,7 +155,10 @@ Tinytest.add('Forms - validation context is available at the field level', funct
     })})
     ;
 
+  div.find('input').val('some value');
   div.find('input').trigger('change');
+
+  Tracker.flush();
   
   test.equal(div.find('.invalid').text(), 'invalid');
 });
@@ -165,7 +171,10 @@ Tinytest.add('Forms - validation context is available at the object level', func
     })})
     ;
 
+  div.find('input').val('some value');
   div.find('input').trigger('change');
+
+  Tracker.flush();
   
   test.equal(div.find('.invalid').text(), 'invalid');
 });
@@ -178,7 +187,10 @@ Tinytest.add('Forms - validation context is available at the array level', funct
     })})
     ;
 
+  div.find('input').val('some value');
   div.find('input').trigger('change');
+
+  Tracker.flush();
   
   test.equal(div.find('.invalid').text(), 'invalid');
 });

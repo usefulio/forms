@@ -115,7 +115,7 @@ Forms.change = function (e, tmpl) {
 
 Forms.error = function (schema, value) {
   var valid = true;
-  if (schema)
+  if (schema && (value || this.dirty))
     valid = schema.validate(value);
   if (valid === true)
     return null;
@@ -126,13 +126,15 @@ Forms.error = function (schema, value) {
 Forms.helpers = {
   form: function () {
     var doc = Template.instance().doc.get();
+    var dirty = Template.instance().dirty.get();
     return _.defaults({
       doc: doc
       , error: function (fieldName) {
         var schema = Schema.child(this.schema, fieldName);
         var value = (doc || {})[fieldName];
-        return Forms.error(schema, value);
+        return Forms.error.call(this, schema, value);
       }
+      , dirty: dirty
     }, this);
   }
   , field: function () {
@@ -147,8 +149,9 @@ Forms.helpers = {
       , error: function () {
         var schema = context.schema();
         var value = context.value;
-        return Forms.error(schema, value);
+        return Forms.error.call(this, schema, value);
       }
+      , dirty: parent.dirty
       , doc: parent.doc
     };
     _.extend(context, this);
@@ -158,21 +161,13 @@ Forms.helpers = {
     var outer = Template.parentData();
     var doc = (outer.doc || {})[this.name]
     var schema = Schema.child(outer.schema, this.name);
-    var error;
-    if (schema) {
-      try {
-        var valid = schema.validate(doc);
-        if (valid !== true)
-          error = valid || new Error('invalid');
-      } catch (e) {
-        error = e;
-      }
-    }
+    var error = Forms.error.call(this, schema, doc);
 
     return _.defaults({
       doc: doc
       , schema: schema
       , error: error
+      , dirty: outer.dirty
     }, this);
   }
   , arrayitem: function () {
@@ -193,6 +188,7 @@ Forms.helpers = {
       doc: doc
       , schema: schema
       , error: error
+      , dirty: outer.dirty
     };
   }
   , arrayeach: function () {
@@ -228,6 +224,7 @@ Forms.events = {
         return;
       e.preventDefault();
 
+      tmpl.dirty.set(true);
       Forms.submit.call(this, e, tmpl);
     }
     , 'change, propertyChange': function (e, tmpl) {
@@ -263,10 +260,12 @@ Forms.events = {
 Template.form.onCreated(function () {
     var tmpl = this;
     tmpl.doc = new ReactiveVar();
+    tmpl.dirty = new ReactiveVar();
 
     tmpl.autorun(function () {
       var data = Template.currentData();
       tmpl.doc.set(data && data.doc);
+      tmpl.dirty.set(false);
     });
 });
 
