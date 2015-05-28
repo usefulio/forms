@@ -2,12 +2,16 @@
   {{> Template.contentBlock context}}
 </template>
 
+<template name="field">
+  {{> Template.contentBlock context}}
+</template>
+
 <template name="subdoc">
-  {{>Template.contentBlock doc=doc schema=schema error=error}}
+  {{>Template.contentBlock context}}
 </template>
 
 <template name="arrayitem">
-    {{>Template.contentBlock doc=doc schema=schema error=error}}
+    {{>Template.contentBlock context}}
 </template>
 
 <template name="arrayeach">
@@ -15,7 +19,7 @@
     {{#subdoc ..}}
       {{#each items}}
         {{#arrayitem this}}
-          {{> Template.contentBlock doc=doc schema=schema error=error}}
+          {{> Template.contentBlock this}}
         {{/arrayitem}}
       {{/each}}
     {{/subdoc}}

@@ -1,10 +1,3 @@
-// Setup
-Forms.formMixin(Template.nestedForm);
-Forms.formMixin(Template.arrayForm);
-// Forms.formMixin(Template.simpleForm);
-Forms.formMixin(Template.validationForm);
-Forms.fieldMixin(Template.field);
-
 // Utils
 function makeForm(formName, options) {
   var div = $('<div>');

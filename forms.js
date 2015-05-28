@@ -86,9 +86,31 @@ Forms.submit = function (e, tmpl) {
   }
 
   newEvent.doc = tmpl.doc.get() || {};
-  newEvent.form = Forms.helpers(e, tmpl);
+  newEvent.form = Forms.helpers.documentSubmit(e, tmpl);
   newEvent.sourceEvent = e;
   $(e.currentTarget).trigger(newEvent);
+};
+
+Forms.change = function (e, tmpl) {
+  var propertyName = e.currentTarget.name;
+  var propertyValue = e.currentTarget.value;
+
+  if (typeof e.propertyName !== "undefined" || e.type !== 'change') {
+    propertyName = e.propertyName;
+  }
+  if (typeof e.propertyValue !== "undefined" || e.type !== 'change') {
+    propertyValue = e.propertyValue;
+  }
+
+  if (propertyName) {
+    var doc = this.doc || {};
+    doc[propertyName] = propertyValue;
+
+    var documentChange = $.Event('documentChange');
+    documentChange.doc = doc;
+
+    $(e.currentTarget).trigger(documentChange);
+  }
 };
 
 Forms.helpers = {
@@ -96,6 +118,88 @@ Forms.helpers = {
     return _.defaults({
       doc: Template.instance().doc.get()
     }, this);
+  }
+  , field: function () {
+    var parent = Template.parentData() || {};
+    var context = {
+      value: function () {
+        return (parent.doc || {})[context.name];
+      }
+      , schema: function () {
+        return Schema.child(parent.schema, context.name);
+      }
+      , error: function () {
+        var schema = context.schema();
+        var valid = true;
+        if (schema)
+          valid = schema.validate(context.value);
+        if (valid === true)
+          return null;
+        else
+          return valid || new Error('invalid');
+      }
+      , doc: parent.doc
+    };
+    _.extend(context, this);
+    return context;
+  }
+  , subdoc: function () {
+    var outer = Template.parentData();
+    var doc = (outer.doc || {})[this.name]
+    var schema = Schema.child(outer.schema, this.name);
+    var error;
+    if (schema) {
+      try {
+        var valid = schema.validate(doc);
+        if (valid !== true)
+          error = valid || new Error('invalid');
+      } catch (e) {
+        error = e;
+      }
+    }
+
+    return _.defaults({
+      doc: doc
+      , schema: schema
+      , error: error
+    }, this);
+  }
+  , arrayitem: function () {
+    var outer = this;
+    var doc = (this.doc || [])[this.index];
+    var schema = Schema.child(outer.schema, this.index);
+    var error;
+    if (schema) {
+      try {
+        var valid = schema.validate(doc);
+        if (valid !== true)
+          error = valid || new Error('invalid');
+      } catch (e) {
+        error = e;
+      }
+    }
+    return {
+      doc: doc
+      , schema: schema
+      , error: error
+    };
+  }
+  , arrayeach: function () {
+    var self = this;
+    return _.map(self.doc, function (a, i) {
+      return _.extend({
+        index: i
+      }, self);
+    });
+  }
+  , documentSubmit: function () {
+    return {
+      clear: function () {
+        var clearFormEvent = new $.Event('documentChange');
+        clearFormEvent.doc = {};
+        $(e.currentTarget).trigger(clearFormEvent);
+      }
+    };    
   }
 };
 
@@ -120,25 +224,27 @@ Forms.events = {
         return;
       e.preventDefault();
 
-      var propertyName = e.currentTarget.name;
-      var propertyValue = e.currentTarget.value;
+      Forms.change(e, tmpl);
+    }
+  }
+  , subdoc: {
+    'documentChange': function (e, tmpl) {
+      if (e.isDefaultPrevented())
+        return;
 
-      if (typeof e.propertyName !== "undefined" || e.type !== 'change') {
-        propertyName = e.propertyName;
-      }
-      if (typeof e.propertyValue !== "undefined" || e.type !== 'change') {
-        propertyValue = e.propertyValue;
-      }
+      tmpl.data.doc = tmpl.data.doc || {};
+      tmpl.data.doc[tmpl.data.name] = e.doc;
+      e.doc = tmpl.data.doc;
+    }
+  }
+  , arrayitem: {
+    'documentChange': function (e, tmpl) {
+      if (e.isDefaultPrevented())
+        return;
 
-      if (propertyName) {
-        var doc = this.doc || {};
-        doc[propertyName] = propertyValue;
-
-        var documentChange = $.Event('documentChange');
-        documentChange.doc = doc;
-
-        $(e.currentTarget).trigger(documentChange);
-      }
+      tmpl.data.doc = tmpl.data.doc || [];
+      tmpl.data.doc[tmpl.data.index] = e.doc;
+      e.doc = tmpl.data.doc;
     }
   }
 };
@@ -154,211 +260,38 @@ Template.form.onCreated(function () {
 });
 
 Template.form.helpers({
-  context: Forms.helpers.form
+  context: function () {
+    return Forms.helpers.form.apply(this);
+  }
 });
 
 Template.form.events(Forms.events.form);
 
-// ======= OLD CODE =======
+Template.field.helpers({
+  context: function () {
+    return Forms.helpers.field.apply(this);
+  }
+});
 
+Template.subdoc.helpers({
+  context: function () {
+    return Forms.helpers.subdoc.apply(this);
+  }
+});
 
+Template.subdoc.events(Forms.events.subdoc);
 
-Forms.helpers = function (e, tmpl) {
-	return {
-		clear: function () {
-      	  var clearFormEvent = new $.Event('documentChange');
-      	  clearFormEvent.doc = {};
-      	  $(e.currentTarget).trigger(clearFormEvent);
-		}
-	};
-};
+Template.arrayeach.helpers({
+  items: function () {
+    return Forms.helpers.arrayeach.apply(this);
+  }
+});
 
-Forms.mixin = function (template) {
-  template.events({
-    'change, propertyChange': function (e, tmpl) {
-      if (e.isDefaultPrevented())
-        return;
-      e.preventDefault();
+Template.arrayitem.helpers({
+  context: function () {
+    return Forms.helpers.arrayitem.apply(this);
+  }
+});
 
-      var propertyName = e.currentTarget.name;
-      var propertyValue = e.currentTarget.value;
+Template.arrayitem.events(Forms.events.arrayitem);
 
-      if (typeof e.propertyName !== "undefined" || e.type !== 'change') {
-        propertyName = e.propertyName;
-      }
-      if (typeof e.propertyValue !== "undefined" || e.type !== 'change') {
-        propertyValue = e.propertyValue;
-      }
-
-      if (propertyName) {
-        var doc = this.doc || {};
-        doc[propertyName] = propertyValue;
-
-        var documentChange = $.Event('documentChange');
-        documentChange.doc = doc;
-
-        $(e.currentTarget).trigger(documentChange);
-      }
-    }
-  });
-};
-
-Forms.formMixin = function (template) {
-  template.onCreated(function () {
-    var tmpl = this;
-    tmpl.doc = new ReactiveVar();
-    // tmpl.schema = new ReactiveVar();
-
-    // XXX store dirty state
-    // XXX store form validation state
-
-    tmpl.autorun(function () {
-      var data = Template.currentData();
-
-      // XXX handle dirty state
-      if (data) {
-        tmpl.doc.set(data.doc);
-        // tmpl.schema.set(data.schema);
-      }
-    });
-  });
-
-  template.helpers({
-    doc: function () {
-      var tmpl = Template.instance();
-      return tmpl.doc.get();
-    }
-  });
-
-  template.events({
-    'documentChange': function (e, tmpl) {
-      if (e.isDefaultPrevented())
-        return;
-      e.preventDefault();
-
-      tmpl.doc.set(e.doc);
-    }
-    , 'submit form': function (e, tmpl) {
-      if (e.isDefaultPrevented())
-        return;
-      e.preventDefault();
-
-      Forms.submit(e, tmpl);
-    }
-  });
-
-  Forms.mixin(template);
-};
-
-Forms.subDocMixin = function (template) {
-  template.events({
-    'documentChange': function (e, tmpl) {
-      if (e.isDefaultPrevented())
-        return;
-
-      tmpl.data.doc = tmpl.data.doc || {};
-      tmpl.data.doc[tmpl.data.name] = e.doc;
-      e.doc = tmpl.data.doc;
-    }
-  });
-
-  template.helpers({
-    doc: function () {
-      var outer = Template.parentData();
-      return (outer.doc || {})[this.name];
-    }
-    , schema: function () {
-      var outer = Template.parentData();
-      return Schema.child(outer.schema, this.name);
-    }
-    , error: function () {
-      var outer = Template.parentData();
-      var schema = Schema.child(outer.schema, this.name);
-      var doc = (outer.doc || {})[this.name];
-      var valid = true;
-      if (schema)
-        valid = schema.validate(doc);
-      if (valid === true)
-        return null;
-      else
-        return valid || new Error('invalid');
-    }
-  });  
-};
-
-Forms.arrayItemMixin = function (template) {
-  template.events({
-    'documentChange': function (e, tmpl) {
-      if (e.isDefaultPrevented())
-        return;
-
-      tmpl.data.doc = tmpl.data.doc || [];
-      tmpl.data.doc[tmpl.data.index] = e.doc;
-      e.doc = tmpl.data.doc;
-    }
-  });
-
-  template.helpers({
-    doc: function () {
-      return (this.doc || [])[this.index];
-    }
-    , error: function () {
-      var outer = this;
-      var schema = Schema.child(outer.schema, this.index);
-      var doc = (outer.doc || {})[this.name];
-      var valid = true;
-      if (schema)
-        valid = schema.validate(doc);
-      if (valid === true)
-        return null;
-      else
-        return valid || new Error('invalid');
-    }
-  });  
-};
-
-Forms.arrayEachMixin = function (template) {
-  template.helpers({
-    items: function () {
-      var self = this;
-      return _.map(self.doc, function (a, i) {
-        return _.extend({
-          index: i
-        }, self);
-      });
-    }
-  });
-};
-
-Forms.fieldMixin = function (template) {
-  template.helpers({
-    context: function () {
-      var parent = Template.parentData() || {};
-      var context = {
-        value: function () {
-          return (parent.doc || {})[context.name];
-        }
-        , schema: function () {
-          return Schema.child(parent.schema, context.name);
-        }
-        , error: function () {
-          var schema = context.schema();
-          var valid = true;
-          if (schema)
-            valid = schema.validate(context.value);
-          if (valid === true)
-            return null;
-          else
-            return valid || new Error('invalid');
-        }
-        , doc: parent.doc
-      };
-      _.extend(context, this);
-      return context;
-    }
-  });
-};
-
-Forms.subDocMixin(Template.subdoc);
-Forms.arrayItemMixin(Template.arrayitem);
-Forms.arrayEachMixin(Template.arrayeach);

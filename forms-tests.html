@@ -7,38 +7,40 @@
 </template>
 
 <template name="validationForm">
-  <form>
-    {{#field name="firstName"}}
-      <input name="firstName" value="{{doc.firstName}}">
-      {{#if error}}
-        <span class="invalid">invalid</span>
-      {{/if}}
-    {{/field}}
-  </form>
+  {{#form}}
+    <form>
+      {{#field name="firstName"}}
+        <input name="firstName" value="{{doc.firstName}}">
+        {{#if error}}
+          <span class="invalid">invalid</span>
+        {{/if}}
+      {{/field}}
+    </form>
+  {{/form}}
 </template>
 
 <template name="nestedForm">
-  <form>
-    {{#subdoc name="profile"}}
-      <input name="firstName" value="{{doc.firstName}}">
-      {{#if error}}
-        <span class="invalid">invalid</span>
-      {{/if}}
-    {{/subdoc}}
-  </form>
+  {{#form}}
+    <form>
+      {{#subdoc name="profile"}}
+        <input name="firstName" value="{{doc.firstName}}">
+        {{#if error}}
+          <span class="invalid">invalid</span>
+        {{/if}}
+      {{/subdoc}}
+    </form>
+  {{/form}}
 </template>
 
 <template name="arrayForm">
-  <form>
-    {{#arrayeach name="users"}}
-      <input name="firstName" value="{{doc.firstName}}">
-      {{#if error}}
-        <span class="invalid">invalid</span>
-      {{/if}}
-    {{/arrayeach}}
-  </form>
-</template>
-
-<template name="field">
-  {{> Template.contentBlock context}}
+  {{#form}}
+    <form>
+      {{#arrayeach name="users"}}
+        <input name="firstName" value="{{doc.firstName}}">
+        {{#if error}}
+          <span class="invalid">invalid</span>
+        {{/if}}
+      {{/arrayeach}}
+    </form>
+  {{/form}}
 </template>
