@@ -131,6 +131,19 @@ Tinytest.add('Forms - documentSubmit event not fired when doc is invalid', funct
   test.equal(eventDidFire, false);
 });
 
+Tinytest.add('Forms - validation context is available at the document level', function (test) {
+  var div = makeForm('validationForm', {schema: new Schema({
+      firstName: Validator(function () {
+        return false;
+      })
+    })})
+    ;
+
+  div.find('input').trigger('change');
+  
+  test.equal(div.find('.error').text(), 'invalid');
+});
+
 Tinytest.add('Forms - validation context is available at the field level', function (test) {
   var div = makeForm('validationForm', {schema: new Schema({
       firstName: Validator(function () {

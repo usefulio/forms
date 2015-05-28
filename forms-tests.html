@@ -15,6 +15,9 @@
           <span class="invalid">invalid</span>
         {{/if}}
       {{/field}}
+      {{#if error "firstName"}}
+        <span class="error">invalid</span>
+      {{/if}}
     </form>
   {{/form}}
 </template>

@@ -8,7 +8,7 @@ Template.exampleForms.helpers({
     return new Schema({
       firstName: new Validator(function (val) {
         return Match.test(val, String) && val.length > 2;
-      })
+      }, 'required')
     });
   }
   , item: function () {
@@ -17,6 +17,9 @@ Template.exampleForms.helpers({
   }
   , print: function (value) {
     return JSON.stringify(value, null, 2);
+  }
+  , errorClass: function (fieldName) {
+    return this.error(fieldName) ? 'has-error' : '';
   }
 });
 

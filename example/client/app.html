@@ -12,15 +12,28 @@
     <p>
       This form is pretty simple, we wrote all the html directly and just have a few validations to run. We're not using any of the built in block helpers, but simply writing inputs just the way we want to.
     </p>
-    {{#form doc=item}}
+    {{#form doc=item schema=schema}}
       <form class="form-inline">
-        <div class="form-group">
+        <div class="form-group {{errorClass 'firstName'}}">
           <label>First</label>
           <input type="text" name="firstName" value="{{doc.firstName}}" class="form-control">
+          <span class="help-block" style="display: inline-block;">
+            {{error 'firstName'}}
+          </span>
+        </div>
+        <div class="form-group {{errorClass 'lastName'}}">
           <label>Last</label>
           <input type="text" name="lastName" value="{{doc.lastName}}" class="form-control">
+          <span class="help-block" style="display: inline-block;">
+            {{error 'lastName'}}
+          </span>
+        </div>
+        <div class="form-group {{errorClass 'age'}}">
           <label>Age</label>
           <input type="number" name="age" value="{{doc.age}}" class="form-control">
+          <span class="help-block" style="display: inline-block;">
+            {{error 'age'}}
+          </span>
         </div>
         <button class="btn btn-primary" type="submit">
           Save

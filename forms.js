@@ -113,10 +113,26 @@ Forms.change = function (e, tmpl) {
   }
 };
 
+Forms.error = function (schema, value) {
+  var valid = true;
+  if (schema)
+    valid = schema.validate(value);
+  if (valid === true)
+    return null;
+  else
+    return valid || new Error('invalid');
+};
+
 Forms.helpers = {
   form: function () {
+    var doc = Template.instance().doc.get();
     return _.defaults({
-      doc: Template.instance().doc.get()
+      doc: doc
+      , error: function (fieldName) {
+        var schema = Schema.child(this.schema, fieldName);
+        var value = (doc || {})[fieldName];
+        return Forms.error(schema, value);
+      }
     }, this);
   }
   , field: function () {
@@ -130,13 +146,8 @@ Forms.helpers = {
       }
       , error: function () {
         var schema = context.schema();
-        var valid = true;
-        if (schema)
-          valid = schema.validate(context.value);
-        if (valid === true)
-          return null;
-        else
-          return valid || new Error('invalid');
+        var value = context.value;
+        return Forms.error(schema, value);
       }
       , doc: parent.doc
     };

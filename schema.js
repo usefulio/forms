@@ -19,8 +19,12 @@ Schema.Array = function (schemaDefinition, options) {
 Schema.Error = Meteor.makeErrorType('Schema.Error', function (schema, errors) {
   this.schema = schema;
   this.errors = errors;
-  this.message = 'object does not conform to schema';
+  this.message = 'some fields are invalid';
 });
+
+Schema.Error.prototype.toString = function () {
+  return this.message;
+};
 
 Schema.validate = function (value, validator) {
   if (!validator)
@@ -105,8 +109,12 @@ Validator = function (validateFn, transformFn, message) {
 Validator.Error = Meteor.makeErrorType('Validator.Error', function (error, value, message) {
   this.validationResult = error;
   this.validationValue = value;
-  this.message = message || "Validation failed";
+  this.message = message || "invalid";
 });
+
+Validator.Error.prototype.toString = function () {
+  return this.message;
+};
 
 Validator.prototype.assert = function (value) {
   var error = this.validate(value);
