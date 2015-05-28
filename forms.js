@@ -86,8 +86,19 @@ Forms.submit = function (e, tmpl) {
   }
 
   newEvent.doc = tmpl.doc.get() || {};
+  newEvent.form = Forms.helpers(e, tmpl);
   newEvent.sourceEvent = e;
   $(e.currentTarget).trigger(newEvent);
+};
+
+Forms.helpers = function (e, tmpl) {
+	return {
+		clear: function () {
+      	  var clearFormEvent = new $.Event('documentChange');
+      	  clearFormEvent.doc = {};
+      	  $(e.currentTarget).trigger(clearFormEvent);
+		}
+	};
 };
 
 Forms.mixin = function (template) {
@@ -273,6 +284,7 @@ Forms.fieldMixin = function (template) {
           else
             return valid || new Error('invalid');
         }
+        , doc: parent.doc
       };
       _.extend(context, this);
       return context;
