@@ -1,0 +1,25 @@
+<template name="horizontalForm">
+  {{#form}}
+    <form class="form-horizontal">
+      {{> Template.contentBlock this}}
+      <button type="submit" class="btn btn-primary">
+        Save
+      </button>
+    </form>
+  {{/form}}
+</template>
+<template name="horizontalField">
+  {{#field}}
+    <div class="form-group">
+      <label class="col-sm-4">
+        {{title}}
+      </label>
+      <div class="col-sm-8 {{#if error}}has-error{{/if}}">
+        {{> Template.contentBlock this}}
+        <span class="help-block">
+          {{error}}
+        </span>
+      </div>
+    </div>
+  {{/field}}
+</template>

@@ -139,16 +139,12 @@ Forms.helpers = {
   }
   , field: function () {
     var parent = Template.parentData() || {};
+    var value = (parent.doc || {})[this.name];
+    var schema = Schema.child(parent.schema, this.name);
     var context = {
-      value: function () {
-        return (parent.doc || {})[context.name];
-      }
-      , schema: function () {
-        return Schema.child(parent.schema, context.name);
-      }
+      value: value
+      , schema: schema
       , error: function () {
-        var schema = context.schema();
-        var value = context.value;
         return Forms.error.call(this, schema, value);
       }
       , dirty: parent.dirty

@@ -40,6 +40,21 @@
         </button>
       </form>
     {{/form}}
+    <h1>
+      Components Form
+    </h1>
+    {{#horizontalForm doc=item schema=schema}}
+      {{#horizontalField name="firstName" title="First Name"}}
+        <input type="text" name="{{name}}" value="{{value}}" class="form-control">
+      {{/horizontalField}}
+      {{#horizontalField name="lastName" title="Last Name"}}
+        <input type="text" name="{{name}}" value="{{value}}" class="form-control">
+      {{/horizontalField}}
+      {{#horizontalField name="age" title="Your Age"}}
+        <input type="text" name="{{name}}" value="{{value}}" class="form-control">
+      {{/horizontalField}}
+    {{/horizontalForm}}
+
     <h1>The Data</h1>
     <p>All of these forms share the same data variable 'profile', here we display it's current state. Notice how it doesn't update until form submission.</p>
     <pre>{{print item}}</pre>
