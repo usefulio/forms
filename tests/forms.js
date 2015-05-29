@@ -231,3 +231,25 @@ Tinytest.add('Forms - documentInvalid event recieves errors', function (test) {
   div.find('form').trigger('submit');
   test.equal(didCallHandler, true);
 });
+
+Tinytest.add('Forms - nested data', function (test) {
+  var div = makeForm(null, {doc: { profile: { name: 'joe'}, emails: ['joe@example.com']}});
+
+  Blaze._withCurrentView(Blaze.getView(div.find('input')[0]), function () {
+    test.equal(Forms.call('value', 'profile.name'), 'joe');
+    test.equal(Forms.call('value', 'emails[0]'), 'joe@example.com');
+    var doc = {};
+    Forms.set(doc, 'profile.name', 'joe');
+    Forms.set(doc, 'emails[0]', 'joe@example.com');
+    test.equal(doc, {
+      profile: {
+        name: 'joe'
+      }
+      , emails: [
+        'joe@example.com'
+      ]
+    });
+    test.equal(Forms.get(doc, 'profile.name'), 'joe');
+    test.equal(Forms.get(doc, 'emails[0]'), 'joe@example.com');
+  });
+});
