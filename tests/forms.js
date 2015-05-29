@@ -123,10 +123,85 @@ Tinytest.add('Forms - documentSubmit event is triggered', function (test) {
   });
 
   div.on('documentSubmit', function (e) {
+    test.equal(e.doc, {
+      name: 'joe'
+    });
+    didCallHandler = true;
+  });
+
+  div.find('form').trigger('submit');
+  test.equal(didCallHandler, true);
+});
+
+Tinytest.add('Forms - documentSubmit event is not triggered when form is invalid', function (test) {
+  var didCallHandler = false;
+  var doc = new ReactiveVar({doc: {name: 'joe'}, schema: {name: function () {return false;}}});
+  var div = makeForm(null, function () {
+    return doc.get();
+  });
+
+  div.on('documentSubmit', function (e) {
     e.preventDefault();
     test.equal(e.doc, {
       name: 'joe'
     });
+    didCallHandler = true;
+  });
+
+  div.find('form').trigger('submit');
+  test.equal(didCallHandler, false);
+});
+
+Tinytest.add('Forms - documentInvalid event is triggered when form is invalid', function (test) {
+  var didCallHandler = false;
+  var doc = new ReactiveVar({doc: {name: 'joe'}, schema: {name: function () {return false;}}});
+  var div = makeForm(null, function () {
+    return doc.get();
+  });
+
+  div.on('documentInvalid', function (e) {
+    e.preventDefault();
+    test.equal(e.doc, {
+      name: 'joe'
+    });
+    didCallHandler = true;
+  });
+
+  div.find('form').trigger('submit');
+  test.equal(didCallHandler, true);
+});
+
+Tinytest.add('Forms - submit event recieves errors when form is invalid', function (test) {
+  var didCallHandler = false;
+  var doc = new ReactiveVar({doc: {name: 'joe'}, schema: {name: function () {return false;}}});
+  var div = makeForm(null, function () {
+    return doc.get();
+  });
+
+  div.on('submit', function (e) {
+    test.equal(e.doc, {
+      name: 'joe'
+    });
+    test.equal(_.pluck(e.errors, 'name'), ['name']);
+    didCallHandler = true;
+  });
+
+  div.find('form').trigger('submit');
+  test.equal(didCallHandler, true);
+});
+
+Tinytest.add('Forms - documentInvalid event recieves errors', function (test) {
+  var didCallHandler = false;
+  var doc = new ReactiveVar({doc: {name: 'joe'}, schema: {name: function () {return false;}}});
+  var div = makeForm(null, function () {
+    return doc.get();
+  });
+
+  div.on('documentInvalid', function (e) {
+    test.equal(e.doc, {
+      name: 'joe'
+    });
+    test.equal(_.pluck(e.errors, 'name'), ['name']);
     didCallHandler = true;
   });
 
