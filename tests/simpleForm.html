@@ -4,3 +4,11 @@
     <span class="error">{{error "name"}}</span>
   </form>
 </template>
+<template name="complexForm">
+  <form>
+    {{#with form}}
+      <input name="name" value={{value "name"}}>
+      <span class="error">{{error "name"}}</span>
+    {{/with}}
+  </form>
+</template>

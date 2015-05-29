@@ -1,5 +1,6 @@
 // Setup
 Forms.mixin(Template.simpleForm);
+Forms.mixin(Template.complexForm);
 
 // Utils
 function makeForm(formName, options) {
@@ -257,4 +258,27 @@ Tinytest.add('Forms - nested data', function (test) {
     test.equal(Forms.get(doc, 'emails[0]'), 'joe@example.com');
     test.equal(Forms.get(doc, 'profile.emails[0].address'), 'joe@example.com');
   });
+});
+
+Tinytest.add('Forms - form helper', function (test) {
+  var div = makeForm('complexForm', {doc: {name: 'joe'}});
+
+  test.equal(div.find('input').val(), 'joe');
+});
+
+
+Tinytest.add('Forms - reactive form helper', function (test) {
+  var doc = new ReactiveVar({doc: {name: 'joe'}});
+  var div = makeForm('complexForm', function () {
+    return doc.get();
+  });
+
+  doc.set({
+    doc: {
+      name: 'sam'
+    }
+  });
+
+  Tracker.flush();
+  test.equal(div.find('input').val(), 'sam');
 });
