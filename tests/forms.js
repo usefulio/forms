@@ -46,25 +46,6 @@ Tinytest.add('Forms - change event updates doc', function (test) {
   test.equal(div.find('input').val(), 'william');
 });
 
-Tinytest.add('Forms - submit event is triggered', function (test) {
-  var didCallHandler = false;
-  var doc = new ReactiveVar({doc: {name: 'joe'}});
-  var div = makeForm(null, function () {
-    return doc.get();
-  });
-
-  div.on('submit', function (e) {
-    e.preventDefault();
-    test.equal(e.doc, {
-      name: 'joe'
-    });
-    didCallHandler = true;
-  });
-
-  div.find('form').trigger('submit');
-  test.equal(didCallHandler, true);
-});
-
 Tinytest.add('Forms - propertyChange event updates doc', function (test) {
   var doc = new ReactiveVar({doc: {name: 'joe'}});
   var div = makeForm(null, function () {
@@ -76,6 +57,22 @@ Tinytest.add('Forms - propertyChange event updates doc', function (test) {
 
   Tracker.flush();
   test.equal(div.find('input').val(), 'william');
+});
+
+Tinytest.add('Forms - custom change values updates doc', function (test) {
+  var doc = new ReactiveVar({doc: {name: 'joe'}});
+  var div = makeForm(null, function () {
+    return doc.get();
+  });
+
+  div.find('input').val('william');
+  Forms.trigger('propertyChange', div.find('input'), {
+    propertyName: 'name'
+    , propertyValue: 'bill'
+  });
+
+  Tracker.flush();
+  test.equal(div.find('input').val(), 'bill');
 });
 
 Tinytest.add('Forms - documentChange event is triggered', function (test) {
@@ -99,18 +96,40 @@ Tinytest.add('Forms - documentChange event is triggered', function (test) {
   test.equal(didCallHandler, true);
 });
 
-Tinytest.add('Forms - custom change values', function (test) {
+Tinytest.add('Forms - submit event is triggered', function (test) {
+  var didCallHandler = false;
   var doc = new ReactiveVar({doc: {name: 'joe'}});
   var div = makeForm(null, function () {
     return doc.get();
   });
 
-  div.find('input').val('william');
-  Forms.trigger('propertyChange', div.find('input'), {
-    propertyName: 'name'
-    , propertyValue: 'bill'
+  div.on('submit', function (e) {
+    e.preventDefault();
+    test.equal(e.doc, {
+      name: 'joe'
+    });
+    didCallHandler = true;
   });
 
-  Tracker.flush();
-  test.equal(div.find('input').val(), 'bill');
+  div.find('form').trigger('submit');
+  test.equal(didCallHandler, true);
+});
+
+Tinytest.add('Forms - documentSubmit event is triggered', function (test) {
+  var didCallHandler = false;
+  var doc = new ReactiveVar({doc: {name: 'joe'}});
+  var div = makeForm(null, function () {
+    return doc.get();
+  });
+
+  div.on('documentSubmit', function (e) {
+    e.preventDefault();
+    test.equal(e.doc, {
+      name: 'joe'
+    });
+    didCallHandler = true;
+  });
+
+  div.find('form').trigger('submit');
+  test.equal(didCallHandler, true);
 });
