@@ -33,7 +33,9 @@ Package.onUse(function(api) {
 	// ====== CLIENT =======
 
 	api.addFiles([
-		'lib/forms.js'
+		'lib/forms.js'		
+		, 'lib/regexps.js'
+		, 'lib/validators.js'
 	], 'client');
 
 	// ====== EXPORTS =======
