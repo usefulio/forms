@@ -2,6 +2,12 @@
 Forms.mixin(Template.simpleForm);
 Forms.mixin(Template.complexForm);
 
+Template.simpleForm.events({ 
+  'mockSubmit': function (e, tmpl) {
+    Forms.submit( e, tmpl );  
+  }
+});
+  
 // Utils
 function makeForm(formName, options) {
   var div = $('<div>');
@@ -68,6 +74,29 @@ Tinytest.add('Forms - change event updates doc', function (test) {
 
   Tracker.flush();
   test.equal(div.find('input').val(), 'william');
+});
+
+Tinytest.add('Forms - submit method', function (test) {
+  var didCallHandler = false;
+  var doc = new ReactiveVar({doc: {name: 'joe'}});
+  var div = makeForm(null, function () {
+    return doc.get();
+  });
+
+  div.on('documentSubmit', function (e) {
+    test.equal(e.doc, {
+      name: 'joe'
+    });
+    didCallHandler = true;
+  });
+
+  div.on('mockSubmit', function (e) {
+    test.equal(_.has(e, 'doc'), true);
+  });
+
+  div.find('input').trigger('mockSubmit');
+
+  test.equal(didCallHandler, true);
 });
 
 Tinytest.add('Forms - propertyChange event updates doc', function (test) {
