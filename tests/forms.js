@@ -39,30 +39,6 @@ Tinytest.add('Forms - reactive data', function (test) {
   test.equal(div.find('input').val(), 'sam');
 });
 
-Tinytest.add('Forms - reactive errors', function (test) {
-  var doc = new ReactiveVar({doc: {name: 'joe'}, schema: {name: function () {return false;}}});
-  var div = makeForm(null, function () {
-    return doc.get();
-  });
-
-  div.find('form').trigger('submit');
-
-  Tracker.flush();
-  test.equal(div.find('.error').text(), 'invalid');
-});
-
-Tinytest.add('Forms - custom error message', function (test) {
-  var doc = new ReactiveVar({doc: {name: 'joe'}, schema: {name: function () {return 'not valid';}}});
-  var div = makeForm(null, function () {
-    return doc.get();
-  });
-
-  div.find('form').trigger('submit');
-
-  Tracker.flush();
-  test.equal(div.find('.error').text(), 'not valid');
-});
-
 Tinytest.add('Forms - change event updates doc', function (test) {
   var doc = new ReactiveVar({doc: {name: 'joe'}});
   var div = makeForm(null, function () {
@@ -295,7 +271,6 @@ Tinytest.add('Forms - form helper', function (test) {
   test.equal(div.find('input').val(), 'joe');
 });
 
-
 Tinytest.add('Forms - reactive form helper', function (test) {
   var doc = new ReactiveVar({doc: {name: 'joe'}});
   var div = makeForm('complexForm', function () {
@@ -311,3 +286,32 @@ Tinytest.add('Forms - reactive form helper', function (test) {
   Tracker.flush();
   test.equal(div.find('input').val(), 'sam');
 });
+
+// ####################################################################
+// ####################################################################
+// Form validation tests
+
+Tinytest.add('Forms - Validation - custom validators - reactive error message displayed', function (test) {
+  var doc = new ReactiveVar({doc: {name: 'joe'}, schema: {name: function () {return false;}}});
+  var div = makeForm(null, function () {
+    return doc.get();
+  });
+
+  div.find('form').trigger('submit');
+
+  Tracker.flush();
+  test.equal(div.find('.error').text(), 'invalid');
+});
+
+Tinytest.add('Forms - Validation - custom validators - custom error message displayed', function (test) {
+  var doc = new ReactiveVar({doc: {name: 'joe'}, schema: {name: function () {return 'not valid';}}});
+  var div = makeForm(null, function () {
+    return doc.get();
+  });
+
+  div.find('form').trigger('submit');
+
+  Tracker.flush();
+  test.equal(div.find('.error').text(), 'not valid');
+});
+
