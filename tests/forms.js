@@ -2,12 +2,6 @@
 Forms.mixin(Template.simpleForm);
 Forms.mixin(Template.complexForm);
 
-Template.simpleForm.events({ 
-  'mockSubmit': function (e, tmpl) {
-    Forms.submit( e, tmpl );  
-  }
-});
-  
 // Utils
 function makeForm(formName, options) {
   var div = $('<div>');
@@ -37,42 +31,6 @@ Tinytest.add('Forms - reactive data', function (test) {
 
   Tracker.flush();
   test.equal(div.find('input').val(), 'sam');
-});
-
-Tinytest.add('Forms - change event updates doc', function (test) {
-  var doc = new ReactiveVar({doc: {name: 'joe'}});
-  var div = makeForm(null, function () {
-    return doc.get();
-  });
-
-  div.find('input').val('william');
-  div.find('input').trigger('change');
-
-  Tracker.flush();
-  test.equal(div.find('input').val(), 'william');
-});
-
-Tinytest.add('Forms - submit method', function (test) {
-  var didCallHandler = false;
-  var doc = new ReactiveVar({doc: {name: 'joe'}});
-  var div = makeForm(null, function () {
-    return doc.get();
-  });
-
-  div.on('documentSubmit', function (e) {
-    test.equal(e.doc, {
-      name: 'joe'
-    });
-    didCallHandler = true;
-  });
-
-  div.on('mockSubmit', function (e) {
-    test.equal(_.has(e, 'doc'), true);
-  });
-
-  div.find('input').trigger('mockSubmit');
-
-  test.equal(didCallHandler, true);
 });
 
 Tinytest.add('Forms - propertyChange event updates doc', function (test) {
@@ -122,25 +80,6 @@ Tinytest.add('Forms - documentChange event is triggered', function (test) {
   div.find('input').val('joe');
   div.find('input').trigger('change');
 
-  test.equal(didCallHandler, true);
-});
-
-Tinytest.add('Forms - submit event is triggered', function (test) {
-  var didCallHandler = false;
-  var doc = new ReactiveVar({doc: {name: 'joe'}});
-  var div = makeForm(null, function () {
-    return doc.get();
-  });
-
-  div.on('submit', function (e) {
-    e.preventDefault();
-    test.equal(e.doc, {
-      name: 'joe'
-    });
-    didCallHandler = true;
-  });
-
-  div.find('form').trigger('submit');
   test.equal(didCallHandler, true);
 });
 
@@ -285,6 +224,131 @@ Tinytest.add('Forms - reactive form helper', function (test) {
 
   Tracker.flush();
   test.equal(div.find('input').val(), 'sam');
+});
+
+// ####################################################################
+// ####################################################################
+// Form event triggering tests
+
+
+// ####################################################################
+// ####################################################################
+// Form event detection tests
+Tinytest.add('Forms - Event detection - change event updates doc', function (test) {
+  var doc = new ReactiveVar({doc: {name: 'joe'}});
+  var div = makeForm(null, function () {
+    return doc.get();
+  });
+
+  div.find('input').val('william');
+  div.find('input').trigger('change');
+
+  Tracker.flush();
+  test.equal(div.find('input').val(), 'william');
+});
+
+Template.simpleForm.togglePreventDefault = false;
+
+Template.simpleForm.events({ 
+  'mockSubmit': function (e, tmpl) {
+    Forms.submit( e, tmpl );  
+  }
+  , 'change, propertyChange': function (e, tmpl) {
+    console.log("simpleForm change, propertyChange event called. trigger: "+Template.simpleForm.togglePreventDefault);
+    if (Template.simpleForm.togglePreventDefault)
+      e.preventDefault();
+  }
+  , 'submit form': function (e, tmpl) {
+    console.log("simpleForm submit event called. trigger: "+Template.simpleForm.togglePreventDefault);
+    if (Template.simpleForm.togglePreventDefault)
+      e.preventDefault();
+  }
+});
+
+Tinytest.add('Forms - Event detection - submit event is triggered', function (test) {
+  var didCallHandler = false;
+  var doc = new ReactiveVar({doc: {name: 'joe'}});
+  var div = makeForm(null, function () {
+    return doc.get();
+  });
+
+  div.on('submit', function (e) {
+    e.preventDefault();
+    test.equal(e.doc, {
+      name: 'joe'
+    });
+    didCallHandler = true;
+  });
+
+  div.find('form').trigger('submit');
+  test.equal(didCallHandler, true);
+});
+
+Tinytest.add('Forms - Event detection - submit method is called', function (test) {
+  var didCallHandler = false;
+  var doc = new ReactiveVar({doc: {name: 'joe'}});
+  var div = makeForm(null, function () {
+    return doc.get();
+  });
+
+  div.on('documentSubmit', function (e) {
+    test.equal(e.doc, {
+      name: 'joe'
+    });
+    didCallHandler = true;
+  });
+
+  div.on('mockSubmit', function (e) {
+    test.equal(_.has(e, 'doc'), true);
+  });
+
+  div.find('input').trigger('mockSubmit');
+
+  test.equal(didCallHandler, true);
+});
+  
+Tinytest.add('Forms - Event detection - change event is bypassed on preventDefault', function (test) {
+  console.log('preventDefault change');
+  Template.simpleForm.togglePreventDefault = true;
+  var didCallHandler = false;
+  var doc = new ReactiveVar({doc: {name: 'joe'}});
+  var div = makeForm(null, function () {
+    return doc.get();
+  });
+
+  div.on('submit', function (e) {
+    // e.preventDefault();
+    test.equal(e.doc, {
+      name: 'joe'
+    });
+    didCallHandler = true;
+    Template.simpleForm.togglePreventDefault = false;
+  });
+
+  div.find('form').trigger('submit');
+ // test.equal(didCallHandler, true);
+});
+  
+Tinytest.add('Forms - Event detection - submit event is bypassed on preventDefault', function (test) {
+  console.log('preventDefault submit');
+  Template.simpleForm.togglePreventDefault = true;
+  var didCallHandler = false;
+  var doc = new ReactiveVar({doc: {name: 'joe'}});
+  var div = makeForm(null, function () {
+    return doc.get();
+  });
+
+  div.on('submit', function (e) {
+    // e.preventDefault();
+    test.equal(e.doc, {
+      name: 'joe'
+    });
+    didCallHandler = true;
+    Template.simpleForm.togglePreventDefault = false;
+  });
+
+  div.find('form').trigger('submit');
+//  test.equal(didCallHandler, true);
 });
 
 // ####################################################################
