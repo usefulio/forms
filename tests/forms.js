@@ -326,10 +326,8 @@ Tinytest.add('Forms - Validation - built-in validators - "unknown validation rul
   try {
       div.find('form').trigger('submit');
   } catch (err) {
-    console.log(err);
     if (err && err.error === "unknown-validation-rule") 
       errorThrown = true;
-    console.log(err.name+" >>> "+err.message);
   }
 
   Tracker.flush();
