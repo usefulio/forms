@@ -315,3 +315,24 @@ Tinytest.add('Forms - Validation - custom validators - custom error message disp
   test.equal(div.find('.error').text(), 'not valid');
 });
 
+Tinytest.add('Forms - Validation - built-in validators - "unknown validation rule" error is thrown', function (test) {
+  var errorThrown = false;
+
+  var doc = new ReactiveVar({doc: {name: 'joe'}, schema: {'name': {'INVALIDTYPE': 'some options'}} });
+  var div = makeForm(null, function () {
+    return doc.get();
+  });
+
+  try {
+      div.find('form').trigger('submit');
+  } catch (err) {
+    console.log(err);
+    if (err && err.error === "unknown-validation-rule") 
+      errorThrown = true;
+    console.log(err.name+" >>> "+err.message);
+  }
+
+  Tracker.flush();
+
+  test.isTrue(errorThrown, "unknown rule detecion failed");
+});
