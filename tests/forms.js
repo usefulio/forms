@@ -7,12 +7,15 @@ function makeForm(formName, options) {
   var div = $('<div>');
   formName = formName || "simpleForm";
   options = options || {};
-  Blaze.renderWithData(Template[formName], options, div[0]);
-  return div;
+  var view = Blaze.renderWithData(Template[formName], options, div[0]);
+  return {
+    div: div,
+    templateInstance: view._domrange.members[0].view.templateInstance() // https://github.com/meteor/meteor/issues/2573#issuecomment-101099328
+    };
 }
 
 Tinytest.add('Forms - initial data', function (test) {
-  var div = makeForm(null, {doc: {name: 'joe'}});
+  var div = makeForm(null, {doc: {name: 'joe'}}).div;
 
   test.equal(div.find('input').val(), 'joe');
 });
@@ -21,7 +24,7 @@ Tinytest.add('Forms - reactive data', function (test) {
   var doc = new ReactiveVar({doc: {name: 'joe'}});
   var div = makeForm(null, function () {
     return doc.get();
-  });
+  }).div;
 
   doc.set({
     doc: {
@@ -37,7 +40,7 @@ Tinytest.add('Forms - propertyChange event updates doc', function (test) {
   var doc = new ReactiveVar({doc: {name: 'joe'}});
   var div = makeForm(null, function () {
     return doc.get();
-  });
+  }).div;
 
   div.find('input').val('william');
   div.find('input').trigger('propertyChange');
@@ -50,7 +53,7 @@ Tinytest.add('Forms - custom change values updates doc', function (test) {
   var doc = new ReactiveVar({doc: {name: 'joe'}});
   var div = makeForm(null, function () {
     return doc.get();
-  });
+  }).div;
 
   div.find('input').val('william');
   Forms.trigger('propertyChange', div.find('input'), {
@@ -67,7 +70,7 @@ Tinytest.add('Forms - documentChange event is triggered', function (test) {
   var doc = new ReactiveVar({doc: {name: 'joe'}});
   var div = makeForm(null, function () {
     return doc.get();
-  });
+  }).div;
 
   div.on('documentChange', function (e) {
     e.preventDefault();
@@ -88,7 +91,7 @@ Tinytest.add('Forms - documentSubmit event is triggered', function (test) {
   var doc = new ReactiveVar({doc: {name: 'joe'}});
   var div = makeForm(null, function () {
     return doc.get();
-  });
+  }).div;
 
   div.on('documentSubmit', function (e) {
     test.equal(e.doc, {
@@ -106,7 +109,7 @@ Tinytest.add('Forms - documentSubmit event is not triggered when form is invalid
   var doc = new ReactiveVar({doc: {name: 'joe'}, schema: {name: function () {return false;}}});
   var div = makeForm(null, function () {
     return doc.get();
-  });
+  }).div;
 
   div.on('documentSubmit', function (e) {
     e.preventDefault();
@@ -125,7 +128,7 @@ Tinytest.add('Forms - documentInvalid event is triggered when form is invalid', 
   var doc = new ReactiveVar({doc: {name: 'joe'}, schema: {name: function () {return false;}}});
   var div = makeForm(null, function () {
     return doc.get();
-  });
+  }).div;
 
   div.on('documentInvalid', function (e) {
     e.preventDefault();
@@ -144,7 +147,7 @@ Tinytest.add('Forms - submit event recieves errors when form is invalid', functi
   var doc = new ReactiveVar({doc: {name: 'joe'}, schema: {name: function () {return false;}}});
   var div = makeForm(null, function () {
     return doc.get();
-  });
+  }).div;
 
   div.on('submit', function (e) {
     test.equal(e.doc, {
@@ -163,7 +166,7 @@ Tinytest.add('Forms - documentInvalid event recieves errors', function (test) {
   var doc = new ReactiveVar({doc: {name: 'joe'}, schema: {name: function () {return false;}}});
   var div = makeForm(null, function () {
     return doc.get();
-  });
+  }).div;
 
   div.on('documentInvalid', function (e) {
     test.equal(e.doc, {
@@ -178,7 +181,7 @@ Tinytest.add('Forms - documentInvalid event recieves errors', function (test) {
 });
 
 Tinytest.add('Forms - nested data', function (test) {
-  var div = makeForm(null, {doc: { profile: { name: 'joe'}, emails: ['joe@example.com']}});
+  var div = makeForm(null, {doc: { profile: { name: 'joe'}, emails: ['joe@example.com']}}).div;
 
   Blaze._withCurrentView(Blaze.getView(div.find('input')[0]), function () {
     test.equal(Forms.call('value', 'profile.name'), 'joe');
@@ -205,7 +208,7 @@ Tinytest.add('Forms - nested data', function (test) {
 });
 
 Tinytest.add('Forms - form helper', function (test) {
-  var div = makeForm('complexForm', {doc: {name: 'joe'}});
+  var div = makeForm('complexForm', {doc: {name: 'joe'}}).div;
 
   test.equal(div.find('input').val(), 'joe');
 });
@@ -214,7 +217,7 @@ Tinytest.add('Forms - reactive form helper', function (test) {
   var doc = new ReactiveVar({doc: {name: 'joe'}});
   var div = makeForm('complexForm', function () {
     return doc.get();
-  });
+  }).div;
 
   doc.set({
     doc: {
@@ -238,7 +241,7 @@ Tinytest.add('Forms - Event detection - change event updates doc', function (tes
   var doc = new ReactiveVar({doc: {name: 'joe'}});
   var div = makeForm(null, function () {
     return doc.get();
-  });
+  }).div;
 
   div.find('input').val('william');
   div.find('input').trigger('change');
@@ -270,7 +273,7 @@ Tinytest.add('Forms - Event detection - submit event is triggered', function (te
   var doc = new ReactiveVar({doc: {name: 'joe'}});
   var div = makeForm(null, function () {
     return doc.get();
-  });
+  }).div;
 
   div.on('submit', function (e) {
     e.preventDefault();
@@ -289,7 +292,7 @@ Tinytest.add('Forms - Event detection - submit method is called', function (test
   var doc = new ReactiveVar({doc: {name: 'joe'}});
   var div = makeForm(null, function () {
     return doc.get();
-  });
+  }).div;
 
   div.on('documentSubmit', function (e) {
     test.equal(e.doc, {
@@ -359,7 +362,7 @@ Tinytest.add('Forms - Validation - custom validators - reactive error message di
   var doc = new ReactiveVar({doc: {name: 'joe'}, schema: {name: function () {return false;}}});
   var div = makeForm(null, function () {
     return doc.get();
-  });
+  }).div;
 
   div.find('form').trigger('submit');
 
@@ -371,7 +374,7 @@ Tinytest.add('Forms - Validation - custom validators - custom error message disp
   var doc = new ReactiveVar({doc: {name: 'joe'}, schema: {name: function () {return 'not valid';}}});
   var div = makeForm(null, function () {
     return doc.get();
-  });
+  }).div;
 
   div.find('form').trigger('submit');
 
@@ -385,12 +388,12 @@ Tinytest.add('Forms - Validation - built-in validators - "unknown validation rul
   var doc = new ReactiveVar({doc: {name: 'joe'}, schema: {'name': {'INVALIDTYPE': 'some options'}} });
   var div = makeForm(null, function () {
     return doc.get();
-  });
+  }).div;
 
   try {
       div.find('form').trigger('submit');
   } catch (err) {
-    if (err && err.error === "unknown-validation-rule") 
+    if (err && err.error === "unknown-validation-rule")
       errorThrown = true;
   }
 
