@@ -247,7 +247,7 @@ Tinytest.add('Forms - Event detection - change event updates doc', function (tes
   div.find('input').trigger('change');
 
   Tracker.flush();
-  test.equal(div.find('input').val(), 'william');
+  test.equal(doc.get().doc.name, 'william');
 });
 
 Template.simpleForm.onCreated = function () {
