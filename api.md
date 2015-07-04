@@ -63,10 +63,10 @@ __Arguments__
  Set to `true` to enable or `false` to disable the handler.
 
 
-__Returns__  *The*
-current status of the event handler (true=active or false=inactive)
+__Returns__  *{boolean}*
+The current status of the event handler (true=active or false=inactive)
 
-All handlers are enabled by default when a new template which makes use of the Forms mixin is created. This function is useful when you need to override the default behavior e.g. to manipulate some form values or perform some other actions before validating the form values and updating the document.
+All handlers are enabled by default when a new template which makes use of the Forms mixin is created. This function is useful when you need to override the default behavior e.g. to manipulate some form values or perform some other actions before validation and updating of the document.
 
 Note that, if you disable either the `submit` or the `change` handlers then you need to manually call the `Forms.submit()` or `Forms.change()` functions respectively in order to properly validate and update the attached reactive document properly. See example below.
 
@@ -75,24 +75,24 @@ Example:
 In the template onCreated helper:
 ```js
 Template.myForm.onCreated = function () {
-Forms.eventHandlerIsActive(tmpl, 'submit', false);
+	Forms.eventHandlerIsActive(tmpl, 'submit', false);
 }
 ```
 
 In the template event helper:
 ```js
 Template.myForm.events({
-'submit': function (e, tmpl) {
-...
-// Do some custom stuff here
-...
-// ... and then make sure that the submit function is called.
-// This way the reactive doc is validated and `documentSubmit` or `documentInvalid` event is triggered.
-Forms.submit(e, tmpl);
-}
+	'submit': function (e, tmpl) {
+		...
+		// Do some custom stuff here
+		...
+		// ... and then make sure that the submit function is called.
+		// This way the reactive doc is validated and `documentSubmit` or `documentInvalid` event is triggered.
+		Forms.submit(e, tmpl);
+	}
 });
 ```
 
-> ```Forms.eventHandlerIsActive = function (templateInstance, event, isActive) { ...``` [lib/forms.js:315](lib/forms.js#L315)
+> ```Forms.eventHandlerIsActive = function (templateInstance, event, isActive) { ...``` [lib/forms.js:317](lib/forms.js#L317)
 
 
