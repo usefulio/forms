@@ -308,7 +308,7 @@ Tinytest.add('Forms - Event detection - change event is bypassed when Forms.chan
   var div = newForm.div;
   var templateInstance = newForm.templateInstance;
 
-  Forms.changeEventIsActive(templateInstance, false);
+  Forms.eventHandlerIsActive(templateInstance, 'change', false);
 
   div.find('input').val('william');
 
@@ -335,7 +335,7 @@ Tinytest.add('Forms - Event detection - submit event is bypassed when Forms.subm
   var div = newForm.div;
   var templateInstance = newForm.templateInstance;
 
-  Forms.submitEventIsActive(templateInstance, false);
+  Forms.eventHandlerIsActive(templateInstance, 'submit', false);
 
   div.on('submit', function (e) {
     test.notEqual(e.doc, {
