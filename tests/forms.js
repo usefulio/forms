@@ -319,7 +319,6 @@ Tinytest.add('Forms - Event detection - change event is bypassed when Forms.chan
   div.find('input').trigger('change');
 
   Tracker.flush();
-  // test.notEqual(div.find('input').val(), 'william', 'change event not bypassed');
 
   test.notEqual(templateInstance.doc.get().name, 'william', 'change event not bypassed');
   test.equal(didCallHandler, true, 'change event handler not called');
