@@ -250,21 +250,10 @@ Tinytest.add('Forms - Event detection - change event updates doc', function (tes
   test.equal(doc.get().doc.name, 'william');
 });
 
-Template.simpleForm.onCreated = function () {
-  // hack in order to have access to the template instance.
-
-};
-
 Template.simpleForm.events({
   'mockSubmit': function (e, tmpl) {
     Forms.submit( e, tmpl );
   }
-  // , 'change, propertyChange': function (e, tmpl) {
-  //   console.log("simpleForm change, propertyChange event called. trigger: "+Forms.submitEventIsActive(tmpl));
-  // }
-  // , 'submit form': function (e, tmpl) {
-  //   console.log("simpleForm submit event called. trigger: "+Forms.submitEventIsActive(tmpl));
-  // }
 });
 
 Tinytest.add('Forms - Event detection - submit event is triggered', function (test) {
