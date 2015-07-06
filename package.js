@@ -1,6 +1,6 @@
 Package.describe({
 	name: 'useful:forms',
-	version: '0.0.11',
+	version: '1.0.0-1',
 	summary: 'Form Template Mixin',
 	git: 'https://github.com/usefulio/forms',
 	documentation: 'README.md'
@@ -32,11 +32,11 @@ Package.onUse(function(api) {
 
 	// ====== CLIENT =======
 
-	api.addFiles('forms.js', 'client');
-	api.addFiles('validators.js', 'client');
-	api.addFiles('regexps.js', 'client');
-	api.addFiles('converters.js', 'client');
-	api.addFiles('helpers.js', 'client');
+	api.addFiles([
+		'lib/forms.js'
+		, 'lib/regexps.js'
+		, 'lib/validators.js'
+	], 'client');
 
 	// ====== EXPORTS =======
 
@@ -45,4 +45,25 @@ Package.onUse(function(api) {
 
 Package.onTest(function(api) {
 	api.use('tinytest');
+	api.use('useful:forms');
+	api.use([
+		'templating'
+		, 'underscore'
+		, 'jquery'
+		, 'reactive-dict'
+		, 'reactive-var'
+		, 'mongo'
+	]);
+
+	// Templates
+	api.addFiles([
+		'tests/simpleForm.html'
+	], 'client');
+
+	// Tests
+	api.addFiles([
+		'tests/forms.js'
+	], 'client');
+
+
 });
