@@ -1,6 +1,6 @@
 Package.describe({
 	name: 'useful:forms',
-	version: '0.0.11',
+	version: '1.0.0-1',
 	summary: 'Form Template Mixin',
 	git: 'https://github.com/usefulio/forms',
 	documentation: 'README.md'
@@ -33,7 +33,7 @@ Package.onUse(function(api) {
 	// ====== CLIENT =======
 
 	api.addFiles([
-		'lib/forms.js'		
+		'lib/forms.js'
 		, 'lib/regexps.js'
 		, 'lib/validators.js'
 	], 'client');
@@ -65,5 +65,5 @@ Package.onTest(function(api) {
 		'tests/forms.js'
 	], 'client');
 
-	
+
 });
