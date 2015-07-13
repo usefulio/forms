@@ -1,6 +1,6 @@
 <template name="simpleForm">
-  <form>
-    <input name="name" value={{value "name"}}>
+  <form class="simpleForm">
+    <input class="innerinput" name="name" value={{value "name"}}>
     <span class="error">{{error "name"}}</span>
   </form>
 </template>
@@ -11,4 +11,11 @@
       <span class="error">{{error "name"}}</span>
     {{/with}}
   </form>
+</template>
+<template name="nestedForms">
+  <form class="outerForm">
+    <input name="name" value={{value "name"}}>
+    <span class="error">{{error "name"}}</span>
+  </form>
+  {{> simpleForm doc=doc}}
 </template>
