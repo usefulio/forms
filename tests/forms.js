@@ -347,9 +347,9 @@ Tinytest.add('Forms - Event detection - submit event is bypassed when Forms.subm
   test.notEqual(didCallHandler, true, 'submit event handler not called');
 });
 
-Tinytest.add('Forms - Event detection - submit event does not propagate to outer enclosing forms', function (test) {
-  var didCallInnerHandler = false;
+Tinytest.add('Forms - Event detection - submit event does not propagate to outer enclosing templates', function (test) {
   var didCallOuterHandler = false;
+  var didCallInnerHandler = 0;
   var doc = new ReactiveVar({doc: {name: 'joe'}});
   var newForm = makeForm('nestedForms', function () {
     return doc.get();
@@ -364,14 +364,74 @@ Tinytest.add('Forms - Event detection - submit event does not propagate to outer
 
   // inner form
   templateInstance.$('.simpleForm').on('documentSubmit', function (e) {
-    didCallInnerHandler = true;
+    didCallInnerHandler++;
   });
 
   // trigger submit in inner form
   templateInstance.$('.simpleForm').trigger('submit');
 
   test.equal( didCallOuterHandler, false, 'submit handler of outer form called');
-  test.equal( didCallInnerHandler, true, 'submit handler of inner form not-called');
+  test.equal( didCallInnerHandler, 1, 'submit handler of inner form called ' + didCallInnerHandler + ' times!');
+});
+
+Tinytest.add('Forms - Event detection - change event does not propagate to outer enclosing templates', function (test) {
+
+  //
+  // var didCallHandler = false;
+  // var doc = new ReactiveVar({doc: {name: 'joe'}});
+  // var newForm = makeForm('simpleForm', function () {
+  //   return doc.get();
+  // });
+  //
+  // var div = newForm.div;
+  // var templateInstance = newForm.templateInstance;
+  //
+  // Forms.eventHandlerIsActive(templateInstance, 'change', false);
+  //
+  // div.find('input').val('william');
+  //
+  // div.find('form').on('change', function (e) {
+  //   didCallHandler = true;
+  // });
+  //
+  // div.find('input').trigger('change');
+  //
+  // Tracker.flush();
+  //
+  // test.notEqual(templateInstance.doc.get().name, 'william', 'change event not bypassed');
+  // test.equal(didCallHandler, true, 'change event handler not called');
+  //
+  //
+
+  var didCallOuterHandler = false;
+  var didCallInnerHandler = 0;
+  var doc = new ReactiveVar({doc: {name: 'joe'}});
+  var newForm = makeForm('nestedForms', function () {
+    return doc.get();
+  });
+
+  var templateInstance = newForm.templateInstance;
+
+  templateInstance.$('.simpleForm input').val('william');
+
+  // outer form
+  templateInstance.$('.outerForm').on('documentChange', function (e) {
+    didCallOuterHandler = true;
+  });
+
+  // inner form
+  templateInstance.$('.simpleForm').on('documentChange', function (e) {
+    didCallInnerHandler++;
+  });
+
+  // trigger submit in inner form
+  templateInstance.$('.simpleForm input').trigger('change');
+
+  Tracker.flush();
+
+  test.equal(templateInstance.doc.get().name, 'william', 'change event did not update the document');
+  test.equal( didCallOuterHandler, false, 'change handler of outer form called');
+  test.equal( didCallInnerHandler, 1, 'change handler of inner form called ' + didCallInnerHandler + ' times!');
 });
 
 // ####################################################################
