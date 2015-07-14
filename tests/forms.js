@@ -149,7 +149,7 @@ Tinytest.add('Forms - submit event recieves errors when form is invalid', functi
     return doc.get();
   }).div;
 
-  div.on('submit', 'form', function (e) {
+  div.on('submit', function (e) {
     test.equal(e.doc, {
       name: 'joe'
     });
@@ -263,7 +263,7 @@ Tinytest.add('Forms - Event detection - submit event is triggered', function (te
     return doc.get();
   }).div;
 
-  div.on('submit', 'form', function (e) {
+  div.on('submit', function (e) {
     e.preventDefault();
     test.equal(e.doc, {
       name: 'joe'
