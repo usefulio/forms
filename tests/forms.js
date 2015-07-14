@@ -149,7 +149,7 @@ Tinytest.add('Forms - submit event recieves errors when form is invalid', functi
     return doc.get();
   }).div;
 
-  div.on('submit', function (e) {
+  div.on('submit', 'form', function (e) {
     test.equal(e.doc, {
       name: 'joe'
     });
@@ -263,7 +263,7 @@ Tinytest.add('Forms - Event detection - submit event is triggered', function (te
     return doc.get();
   }).div;
 
-  div.on('submit', function (e) {
+  div.on('submit', 'form', function (e) {
     e.preventDefault();
     test.equal(e.doc, {
       name: 'joe'
@@ -296,55 +296,6 @@ Tinytest.add('Forms - Event detection - submit method is called', function (test
   div.find('input').trigger('mockSubmit');
 
   test.equal(didCallHandler, true);
-});
-
-Tinytest.add('Forms - Event detection - change event is bypassed when Forms.changeEventIsActive is set to "false"', function (test) {
-  var didCallHandler = false;
-  var doc = new ReactiveVar({doc: {name: 'joe'}});
-  var newForm = makeForm('simpleForm', function () {
-    return doc.get();
-  });
-
-  var div = newForm.div;
-  var templateInstance = newForm.templateInstance;
-
-  Forms.eventHandlerIsActive(templateInstance, 'change', false);
-
-  div.find('input').val('william');
-
-  div.on('change', function (e) {
-    didCallHandler = true;
-  });
-
-  div.find('input').trigger('change');
-
-  Tracker.flush();
-
-  test.notEqual(templateInstance.doc.get().name, 'william', 'change event not bypassed');
-  test.equal(didCallHandler, true, 'change event handler not called');
-});
-
-Tinytest.add('Forms - Event detection - submit event is bypassed when Forms.submitEventIsActive is set to "false"', function (test) {
-  var didCallHandler = false;
-  var doc = new ReactiveVar({doc: {name: 'joe'}});
-  var newForm = makeForm('simpleForm', function () {
-    return doc.get();
-  });
-
-  var div = newForm.div;
-  var templateInstance = newForm.templateInstance;
-
-  Forms.eventHandlerIsActive(templateInstance, 'submit', false);
-
-  div.on('submit', function (e) {
-    test.notEqual(e.doc, {
-      name: 'joe'
-    }, 'submit event not bypassed');
-    didCallHandler = true;
-  });
-
-  div.find('form').trigger('submit');
-  test.equal(didCallHandler, true, 'submit event handler not called');
 });
 
 // ####################################################################
