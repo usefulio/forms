@@ -12,3 +12,12 @@
     {{/with}}
   </form>
 </template>
+<template name="nestedForms">
+  <form>
+    {{#with form}}
+      <input name="name" value={{value "name"}}>
+      <span class="error">{{error "name"}}</span>
+    {{/with}}
+  </form>
+  {{>simpleForm}}
+</template>

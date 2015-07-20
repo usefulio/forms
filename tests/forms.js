@@ -1,6 +1,7 @@
 // Setup
 Forms.mixin(Template.simpleForm);
 Forms.mixin(Template.complexForm);
+Forms.mixin(Template.nestedForms);
 
 // Utils
 function makeForm(formName, options) {
@@ -14,13 +15,17 @@ function makeForm(formName, options) {
     };
 }
 
-Tinytest.add('Forms - initial data', function (test) {
+// ####################################################################
+// ####################################################################
+// Form DOM manipulation tests
+
+Tinytest.add('Forms - DOM - initial data', function (test) {
   var div = makeForm(null, {doc: {name: 'joe'}}).div;
 
   test.equal(div.find('input').val(), 'joe');
 });
 
-Tinytest.add('Forms - reactive data', function (test) {
+Tinytest.add('Forms - DOM - reactive data', function (test) {
   var doc = new ReactiveVar({doc: {name: 'joe'}});
   var div = makeForm(null, function () {
     return doc.get();
@@ -36,7 +41,33 @@ Tinytest.add('Forms - reactive data', function (test) {
   test.equal(div.find('input').val(), 'sam');
 });
 
-Tinytest.add('Forms - propertyChange event updates doc', function (test) {
+Tinytest.add('Forms - DOM - form helper', function (test) {
+  var div = makeForm('complexForm', {doc: {name: 'joe'}}).div;
+
+  test.equal(div.find('input').val(), 'joe');
+});
+
+Tinytest.add('Forms - DOM - reactive form helper', function (test) {
+  var doc = new ReactiveVar({doc: {name: 'joe'}});
+  var div = makeForm('complexForm', function () {
+    return doc.get();
+  }).div;
+
+  doc.set({
+    doc: {
+      name: 'sam'
+    }
+  });
+
+  Tracker.flush();
+  test.equal(div.find('input').val(), 'sam');
+});
+
+// ####################################################################
+// ####################################################################
+// Form document updating tests
+
+Tinytest.add('Forms - document updates - propertyChange event updates doc', function (test) {
   var doc = new ReactiveVar({doc: {name: 'joe'}});
   var div = makeForm(null, function () {
     return doc.get();
@@ -49,7 +80,7 @@ Tinytest.add('Forms - propertyChange event updates doc', function (test) {
   test.equal(div.find('input').val(), 'william');
 });
 
-Tinytest.add('Forms - custom change values updates doc', function (test) {
+Tinytest.add('Forms - document updates - custom change values updates doc', function (test) {
   var doc = new ReactiveVar({doc: {name: 'joe'}});
   var div = makeForm(null, function () {
     return doc.get();
@@ -65,122 +96,7 @@ Tinytest.add('Forms - custom change values updates doc', function (test) {
   test.equal(div.find('input').val(), 'bill');
 });
 
-Tinytest.add('Forms - documentChange event is triggered', function (test) {
-  var didCallHandler = false;
-  var doc = new ReactiveVar({doc: {name: 'joe'}});
-  var div = makeForm(null, function () {
-    return doc.get();
-  }).div;
-
-  div.on('documentChange', function (e) {
-    e.preventDefault();
-    test.equal(e.doc, {
-      name: 'joe'
-    });
-    didCallHandler = true;
-  });
-
-  div.find('input').val('joe');
-  div.find('input').trigger('change');
-
-  test.equal(didCallHandler, true);
-});
-
-Tinytest.add('Forms - documentSubmit event is triggered', function (test) {
-  var didCallHandler = false;
-  var doc = new ReactiveVar({doc: {name: 'joe'}});
-  var div = makeForm(null, function () {
-    return doc.get();
-  }).div;
-
-  div.on('documentSubmit', function (e) {
-    test.equal(e.doc, {
-      name: 'joe'
-    });
-    didCallHandler = true;
-  });
-
-  div.find('form').trigger('submit');
-  test.equal(didCallHandler, true);
-});
-
-Tinytest.add('Forms - documentSubmit event is not triggered when form is invalid', function (test) {
-  var didCallHandler = false;
-  var doc = new ReactiveVar({doc: {name: 'joe'}, schema: {name: function () {return false;}}});
-  var div = makeForm(null, function () {
-    return doc.get();
-  }).div;
-
-  div.on('documentSubmit', function (e) {
-    e.preventDefault();
-    test.equal(e.doc, {
-      name: 'joe'
-    });
-    didCallHandler = true;
-  });
-
-  div.find('form').trigger('submit');
-  test.equal(didCallHandler, false);
-});
-
-Tinytest.add('Forms - documentInvalid event is triggered when form is invalid', function (test) {
-  var didCallHandler = false;
-  var doc = new ReactiveVar({doc: {name: 'joe'}, schema: {name: function () {return false;}}});
-  var div = makeForm(null, function () {
-    return doc.get();
-  }).div;
-
-  div.on('documentInvalid', function (e) {
-    e.preventDefault();
-    test.equal(e.doc, {
-      name: 'joe'
-    });
-    didCallHandler = true;
-  });
-
-  div.find('form').trigger('submit');
-  test.equal(didCallHandler, true);
-});
-
-Tinytest.add('Forms - submit event recieves errors when form is invalid', function (test) {
-  var didCallHandler = false;
-  var doc = new ReactiveVar({doc: {name: 'joe'}, schema: {name: function () {return false;}}});
-  var div = makeForm(null, function () {
-    return doc.get();
-  }).div;
-
-  div.on('submit', function (e) {
-    test.equal(e.doc, {
-      name: 'joe'
-    });
-    test.equal(_.pluck(e.errors, 'name'), ['name']);
-    didCallHandler = true;
-  });
-
-  div.find('form').trigger('submit');
-  test.equal(didCallHandler, true);
-});
-
-Tinytest.add('Forms - documentInvalid event recieves errors', function (test) {
-  var didCallHandler = false;
-  var doc = new ReactiveVar({doc: {name: 'joe'}, schema: {name: function () {return false;}}});
-  var div = makeForm(null, function () {
-    return doc.get();
-  }).div;
-
-  div.on('documentInvalid', function (e) {
-    test.equal(e.doc, {
-      name: 'joe'
-    });
-    test.equal(_.pluck(e.errors, 'name'), ['name']);
-    didCallHandler = true;
-  });
-
-  div.find('form').trigger('submit');
-  test.equal(didCallHandler, true);
-});
-
-Tinytest.add('Forms - nested data', function (test) {
+Tinytest.add('Forms - document updates - nested data', function (test) {
   var div = makeForm(null, {doc: { profile: { name: 'joe'}, emails: ['joe@example.com']}}).div;
 
   Blaze._withCurrentView(Blaze.getView(div.find('input')[0]), function () {
@@ -207,37 +123,117 @@ Tinytest.add('Forms - nested data', function (test) {
   });
 });
 
-Tinytest.add('Forms - form helper', function (test) {
-  var div = makeForm('complexForm', {doc: {name: 'joe'}}).div;
-
-  test.equal(div.find('input').val(), 'joe');
-});
-
-Tinytest.add('Forms - reactive form helper', function (test) {
-  var doc = new ReactiveVar({doc: {name: 'joe'}});
-  var div = makeForm('complexForm', function () {
-    return doc.get();
-  }).div;
-
-  doc.set({
-    doc: {
-      name: 'sam'
-    }
-  });
-
-  Tracker.flush();
-  test.equal(div.find('input').val(), 'sam');
-});
-
 // ####################################################################
 // ####################################################################
 // Form event triggering tests
 
+Tinytest.add('Forms - Events triggered by Forms - documentChange event is triggered', function (test) {
+  var didCallHandler = false;
+  var doc = new ReactiveVar({doc: {name: 'joe'}});
+  var div = makeForm(null, function () {
+    return doc.get();
+  }).div;
+
+  div.on('documentChange', function (e) {
+    e.preventDefault();
+    test.equal(e.doc, {
+      name: 'joe'
+    });
+    didCallHandler = true;
+  });
+
+  div.find('input').val('joe');
+  div.find('input').trigger('change');
+
+  test.equal(didCallHandler, true);
+});
+
+Tinytest.add('Forms - Events triggered by Forms - documentSubmit event is triggered', function (test) {
+  var didCallHandler = false;
+  var doc = new ReactiveVar({doc: {name: 'joe'}});
+  var div = makeForm(null, function () {
+    return doc.get();
+  }).div;
+
+  div.on('documentSubmit', function (e) {
+    test.equal(e.doc, {
+      name: 'joe'
+    });
+    didCallHandler = true;
+  });
+
+  div.find('form').trigger('submit');
+  test.equal(didCallHandler, true);
+});
+
+Tinytest.add('Forms - Events triggered by Forms - documentSubmit event is not triggered when form is invalid', function (test) {
+  var didCallHandler = false;
+  var doc = new ReactiveVar({doc: {name: 'joe'}, schema: {name: function () {return false;}}});
+  var div = makeForm(null, function () {
+    return doc.get();
+  }).div;
+
+  div.on('documentSubmit', function (e) {
+    e.preventDefault();
+    test.equal(e.doc, {
+      name: 'joe'
+    });
+    didCallHandler = true;
+  });
+
+  div.find('form').trigger('submit');
+  test.equal(didCallHandler, false);
+});
+
+Tinytest.add('Forms - Events triggered by Forms - documentInvalid event is triggered when form is invalid', function (test) {
+  var didCallHandler = false;
+  var doc = new ReactiveVar({doc: {name: 'joe'}, schema: {name: function () {return false;}}});
+  var div = makeForm(null, function () {
+    return doc.get();
+  }).div;
+
+  div.on('documentInvalid', function (e) {
+    e.preventDefault();
+    test.equal(e.doc, {
+      name: 'joe'
+    });
+    didCallHandler = true;
+  });
+
+  div.find('form').trigger('submit');
+  test.equal(didCallHandler, true);
+});
 
 // ####################################################################
 // ####################################################################
-// Form event detection tests
-Tinytest.add('Forms - Event detection - change event updates doc', function (test) {
+// Form event handling tests
+
+Template.simpleForm.events({
+  'mockSubmit': function (e, tmpl) {
+    Forms.submit( e, tmpl );
+  }
+});
+
+Tinytest.add('Forms - Event handling - documentInvalid event receives errors', function (test) {
+  var didCallHandler = false;
+  var doc = new ReactiveVar({doc: {name: 'joe'}, schema: {name: function () {return false;}}});
+  var div = makeForm(null, function () {
+    return doc.get();
+  }).div;
+
+  div.on('documentInvalid', function (e) {
+    test.equal(e.doc, {
+      name: 'joe'
+    });
+    test.equal(_.pluck(e.errors, 'name'), ['name']);
+    didCallHandler = true;
+  });
+
+  div.find('form').trigger('submit');
+  test.equal(didCallHandler, true);
+});
+
+Tinytest.add('Forms - Event handling - change event updates doc', function (test) {
   var doc = new ReactiveVar({doc: {name: 'joe'}});
   var div = makeForm(null, function () {
     return doc.get();
@@ -250,32 +246,116 @@ Tinytest.add('Forms - Event detection - change event updates doc', function (tes
   test.equal(doc.get().doc.name, 'william');
 });
 
-Template.simpleForm.events({
-  'mockSubmit': function (e, tmpl) {
-    Forms.submit( e, tmpl );
-  }
-});
+// Tinytest.add('Forms - Event handling - change event is bypassed when Forms.changeEventIsActive is set to "false"', function (test) {
+//   var didCallHandler = false;
+//   var doc = new ReactiveVar({doc: {name: 'joe'}});
+//   var newForm = makeForm('simpleForm', function () {
+//     return doc.get();
+//   });
+//
+//   var div = newForm.div;
+//   var templateInstance = newForm.templateInstance;
+//
+//   Forms.eventHandlerIsActive(templateInstance, 'change', false);
+//
+//   div.find('input').val('william');
+//
+//   div.find('form').on('change', function (e) {
+//     didCallHandler = true;
+//   });
+//
+//   div.find('input').trigger('change');
+//
+//   Tracker.flush();
+//
+//   test.notEqual(templateInstance.doc.get().name, 'william', 'change event not bypassed');
+//   test.equal(didCallHandler, true, 'change event handler not called');
+// });
 
-Tinytest.add('Forms - Event detection - submit event is triggered', function (test) {
+// Tinytest.add('Forms - Event handling - change event does not propagate to outer enclosing templates', function (test) {
+//   var didCallOuterHandler = false;
+//   var didCallInnerHandler = 0;
+//   var didCallOuterInput = 0;
+//   var didCallInnerInput = 0;
+//   var doc = new ReactiveVar({doc: {name: 'joe'}});
+//   var newForm = makeForm('nestedForms', function () {
+//     return doc.get();
+//   });
+//
+//   var templateInstance = newForm.templateInstance;
+//
+//   templateInstance.$('.simpleForm input').val('william');
+//
+//   // outer form & input
+//   templateInstance.$('.outerForm').on('documentChange', function (e) {
+//     didCallOuterHandler = true;
+//   });
+//
+//   templateInstance.$('.outerForm input').on('documentChange', function (e) {
+//     didCallOuterHandler = true;
+//   });
+//
+//
+//   // inner form & input
+//   templateInstance.$('.simpleForm').on('documentChange', function (e) {
+//     didCallInnerHandler++;
+//   });
+//
+//   templateInstance.$('.outerForm input').on('documentChange', function (e) {
+//     didCallOuterHandler = true;
+//   });
+//
+//   // trigger submit in inner form
+//   templateInstance.$('.simpleForm input').trigger('change');
+//
+//   Tracker.flush();
+//
+//   test.equal(templateInstance.doc.get().name, 'william', 'change event did not update the document');
+//   test.equal( didCallOuterHandler, false, 'change handler of outer form called');
+//   test.equal( didCallInnerHandler, 1, 'change handler of inner form called ' + didCallInnerHandler + ' times!');
+// });
+
+Tinytest.add('Forms - Event handling - submit event receives errors when form is invalid', function (test) {
   var didCallHandler = false;
-  var doc = new ReactiveVar({doc: {name: 'joe'}});
+  var doc = new ReactiveVar({doc: {name: 'joe'}, schema: {name: function () {return false;}}});
   var div = makeForm(null, function () {
     return doc.get();
   }).div;
 
-  div.on('submit', function (e) {
-    e.preventDefault();
+  div.on('documentInvalid', function (e) {
     test.equal(e.doc, {
       name: 'joe'
     });
+    test.equal(_.pluck(e.errors, 'name'), ['name']);
     didCallHandler = true;
   });
 
-  div.find('form').trigger('submit');
+  div.find('input').trigger('submit');
+  test.equal(didCallHandler, true, 'submit handler not called');
+});
+
+Tinytest.add('Forms - Event handling - submit event is triggered', function (test) {
+  var didCallHandler = false;
+  var doc = new ReactiveVar({doc: {name: 'joe'}});
+  var newForm = makeForm(null, function () {
+    return doc.get();
+  });
+
+  var templateInstance = newForm.templateInstance;
+
+  newForm.div.find('form').on('submit', function (e) {
+    e.preventDefault();
+    // test.equal(e.doc, {
+    //   name: 'joe'
+    // });
+    didCallHandler = true;
+  });
+
+  templateInstance.$('input').trigger('submit');
   test.equal(didCallHandler, true);
 });
 
-Tinytest.add('Forms - Event detection - submit method is called', function (test) {
+Tinytest.add('Forms - Event handling - submit method is called', function (test) {
   var didCallHandler = false;
   var doc = new ReactiveVar({doc: {name: 'joe'}});
   var div = makeForm(null, function () {
@@ -298,11 +378,59 @@ Tinytest.add('Forms - Event detection - submit method is called', function (test
   test.equal(didCallHandler, true);
 });
 
+// Tinytest.add('Forms - Event handling - submit event is bypassed when Forms.submitEventIsActive is set to "false"', function (test) {
+//   var didCallHandler = false;
+//   var doc = new ReactiveVar({doc: {name: 'joe'}});
+//   var newForm = makeForm('simpleForm', function () {
+//     return doc.get();
+//   });
+//
+//   var div = newForm.div;
+//   var templateInstance = newForm.templateInstance;
+//
+//   Forms.eventHandlerIsActive(templateInstance, 'submit', false);
+//
+//   templateInstance.$('form').on('documentSubmit', function (e) {
+//     didCallHandler = true;
+//   });
+//
+//   templateInstance.$('input').trigger('submit');
+//   test.notEqual(didCallHandler, true, 'submit event handler not called');
+// });
+//
+// Tinytest.add('Forms - Event handling - submit event does not propagate to outer enclosing templates', function (test) {
+//   var didCallOuterHandler = false;
+//   var didCallInnerHandler = 0;
+//   var doc = new ReactiveVar({doc: {name: 'joe'}});
+//   var newForm = makeForm('nestedForms', function () {
+//     return doc.get();
+//   });
+//
+//   var templateInstance = newForm.templateInstance;
+//
+//   // outer form
+//   templateInstance.$('.outerForm').on('documentSubmit', function (e) {
+//     didCallOuterHandler = true;
+//   });
+//
+//   // inner form
+//   templateInstance.$('.simpleForm').on('documentSubmit', function (e) {
+//     didCallInnerHandler++;
+//   });
+//
+//   // trigger submit in inner form
+//   templateInstance.$('.simpleForm').trigger('submit');
+//
+//   test.equal( didCallOuterHandler, false, 'submit handler of outer form called');
+//   test.equal( didCallInnerHandler, 1, 'submit handler of inner form called ' + didCallInnerHandler + ' times!');
+// });
+//
 // ####################################################################
 // ####################################################################
 // Form validation tests
 
-Tinytest.add('Forms - Validation - custom validators - reactive error message displayed', function (test) {
+
+Tinytest.add('Forms - Validation - custom validators: reactive error message displayed', function (test) {
   var doc = new ReactiveVar({doc: {name: 'joe'}, schema: {name: function () {return false;}}});
   var div = makeForm(null, function () {
     return doc.get();
@@ -314,7 +442,7 @@ Tinytest.add('Forms - Validation - custom validators - reactive error message di
   test.equal(div.find('.error').text(), 'invalid');
 });
 
-Tinytest.add('Forms - Validation - custom validators - custom error message displayed', function (test) {
+Tinytest.add('Forms - Validation - custom validators: custom error message displayed', function (test) {
   var doc = new ReactiveVar({doc: {name: 'joe'}, schema: {name: function () {return 'not valid';}}});
   var div = makeForm(null, function () {
     return doc.get();
@@ -326,7 +454,7 @@ Tinytest.add('Forms - Validation - custom validators - custom error message disp
   test.equal(div.find('.error').text(), 'not valid');
 });
 
-Tinytest.add('Forms - Validation - built-in validators - "unknown validation rule" error is thrown', function (test) {
+Tinytest.add('Forms - Validation - built-in validators: "unknown validation rule" error is thrown', function (test) {
   var errorThrown = false;
 
   var doc = new ReactiveVar({doc: {name: 'joe'}, schema: {'name': {'INVALIDTYPE': 'some options'}} });
