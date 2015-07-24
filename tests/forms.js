@@ -58,10 +58,7 @@ Tinytest.add('Forms - custom change values updates doc', function (test) {
 
   div.find('input').val('william');
   div.find('input').trigger('propertyChange');
-  // Forms.trigger('propertyChange', div.find('input'), {
-  //   propertyName: 'name'
-  //   , propertyValue: 'bill'
-  // });
+
   test.equal(doc.get().doc.name, 'william');
 
   div.find('input').trigger('propertyChange', {
@@ -150,25 +147,6 @@ Tinytest.add('Forms - documentInvalid event is triggered when form is invalid', 
   div.find('form').trigger('submit');
   test.equal(didCallHandler, true);
 });
-
-// Tinytest.add('Forms - submit event receives errors when form is invalid', function (test) {
-//   var didCallHandler = false;
-//   var doc = new ReactiveVar({doc: {name: 'joe'}, schema: {name: function () {return false;}}});
-//   var div = makeForm(null, function () {
-//     return doc.get();
-//   }).div;
-
-//   div.on('submit', function (e) {
-//     test.equal(e.doc, {
-//       name: 'joe'
-//     });
-//     test.equal(_.pluck(e.errors, 'name'), ['name']);
-//     didCallHandler = true;
-//   });
-
-//   div.find('form').trigger('submit');
-//   test.equal(didCallHandler, true);
-// });
 
 Tinytest.add('Forms - documentInvalid event receives errors', function (test) {
   var didCallHandler = false;
