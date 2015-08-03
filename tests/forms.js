@@ -54,15 +54,19 @@ Tinytest.add('Forms - custom change values updates doc', function (test) {
   var div = makeForm(null, function () {
     return doc.get();
   }).div;
+  var didCallHandler = false;
 
   div.find('input').val('william');
-  Forms.trigger('propertyChange', div.find('input'), {
+  div.find('input').trigger('propertyChange');
+
+  test.equal(doc.get().doc.name, 'william');
+
+  div.find('input').trigger('propertyChange', {
     propertyName: 'name'
     , propertyValue: 'bill'
   });
 
-  Tracker.flush();
-  test.equal(div.find('input').val(), 'bill');
+  test.equal(doc.get().doc.name, 'bill');
 });
 
 Tinytest.add('Forms - documentChange event is triggered', function (test) {
@@ -72,9 +76,9 @@ Tinytest.add('Forms - documentChange event is triggered', function (test) {
     return doc.get();
   }).div;
 
-  div.on('documentChange', function (e) {
+  div.on('documentChange', function (e, doc) {
     e.preventDefault();
-    test.equal(e.doc, {
+    test.equal(doc, {
       name: 'joe'
     });
     didCallHandler = true;
@@ -93,8 +97,8 @@ Tinytest.add('Forms - documentSubmit event is triggered', function (test) {
     return doc.get();
   }).div;
 
-  div.on('documentSubmit', function (e) {
-    test.equal(e.doc, {
+  div.on('documentSubmit', function (e, doc) {
+    test.equal(doc, {
       name: 'joe'
     });
     didCallHandler = true;
@@ -111,9 +115,9 @@ Tinytest.add('Forms - documentSubmit event is not triggered when form is invalid
     return doc.get();
   }).div;
 
-  div.on('documentSubmit', function (e) {
+  div.on('documentSubmit', function (e, doc) {
     e.preventDefault();
-    test.equal(e.doc, {
+    test.equal(doc, {
       name: 'joe'
     });
     didCallHandler = true;
@@ -130,9 +134,11 @@ Tinytest.add('Forms - documentInvalid event is triggered when form is invalid', 
     return doc.get();
   }).div;
 
-  div.on('documentInvalid', function (e) {
+  div.on('documentInvalid', function (e, doc, errors) {
     e.preventDefault();
-    test.equal(e.doc, {
+    test.isNotUndefined(doc, 'documentInvalid event: no doc parameter');
+    test.isNotUndefined(errors, 'documentInvalid event: no errors parameter');
+    test.equal(doc, {
       name: 'joe'
     });
     didCallHandler = true;
@@ -142,37 +148,18 @@ Tinytest.add('Forms - documentInvalid event is triggered when form is invalid', 
   test.equal(didCallHandler, true);
 });
 
-Tinytest.add('Forms - submit event recieves errors when form is invalid', function (test) {
+Tinytest.add('Forms - documentInvalid event receives errors', function (test) {
   var didCallHandler = false;
   var doc = new ReactiveVar({doc: {name: 'joe'}, schema: {name: function () {return false;}}});
   var div = makeForm(null, function () {
     return doc.get();
   }).div;
 
-  div.on('submit', function (e) {
-    test.equal(e.doc, {
-      name: 'joe'
-    });
-    test.equal(_.pluck(e.errors, 'name'), ['name']);
-    didCallHandler = true;
-  });
-
-  div.find('form').trigger('submit');
-  test.equal(didCallHandler, true);
-});
-
-Tinytest.add('Forms - documentInvalid event recieves errors', function (test) {
-  var didCallHandler = false;
-  var doc = new ReactiveVar({doc: {name: 'joe'}, schema: {name: function () {return false;}}});
-  var div = makeForm(null, function () {
-    return doc.get();
-  }).div;
-
-  div.on('documentInvalid', function (e) {
-    test.equal(e.doc, {
-      name: 'joe'
-    });
-    test.equal(_.pluck(e.errors, 'name'), ['name']);
+  div.on('documentInvalid', function (e, doc, errors) {
+    e.preventDefault();
+    test.isNotUndefined(doc, 'documentInvalid event: no doc parameter');
+    test.isNotUndefined(errors, 'documentInvalid event: no errors parameter');
+    test.equal(!!_.size(errors), true);
     didCallHandler = true;
   });
 
@@ -251,8 +238,8 @@ Tinytest.add('Forms - Event detection - change event updates doc', function (tes
 });
 
 Template.simpleForm.events({
-  'mockSubmit': function (e, tmpl) {
-    Forms.submit( e, tmpl );
+  'mockSubmit': function (e, tmpl, doc) {
+    Forms.submit( e, tmpl, doc );
   }
 });
 
@@ -263,9 +250,8 @@ Tinytest.add('Forms - Event detection - submit event is triggered', function (te
     return doc.get();
   }).div;
 
-  div.on('submit', function (e) {
-    e.preventDefault();
-    test.equal(e.doc, {
+  div.on('documentSubmit', function (e, doc) {
+    test.equal(doc, {
       name: 'joe'
     });
     didCallHandler = true;
@@ -282,18 +268,20 @@ Tinytest.add('Forms - Event detection - submit method is called', function (test
     return doc.get();
   }).div;
 
-  div.on('documentSubmit', function (e) {
-    test.equal(e.doc, {
+  div.on('documentSubmit', function (e, doc) {
+    test.equal(doc, {
       name: 'joe'
     });
     didCallHandler = true;
   });
 
-  div.on('mockSubmit', function (e) {
-    test.equal(_.has(e, 'doc'), true);
+  div.on('mockSubmit', function (e, doc) {
+    test.equal(doc, {
+      name: 'joe'
+    });
   });
 
-  div.find('input').trigger('mockSubmit');
+  div.find('input').trigger('mockSubmit', doc.get().doc);
 
   test.equal(didCallHandler, true);
 });
