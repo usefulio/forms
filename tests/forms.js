@@ -250,15 +250,14 @@ Tinytest.add('Forms - Event detection - submit event is triggered', function (te
     return doc.get();
   }).div;
 
-  div.on('submit', function (e, doc) {
-    e.preventDefault();
+  div.on('documentSubmit', function (e, doc) {
     test.equal(doc, {
       name: 'joe'
     });
     didCallHandler = true;
   });
 
-  div.find('form').trigger('submit', doc.get().doc);
+  div.find('form').trigger('submit');
   test.equal(didCallHandler, true);
 });
 
