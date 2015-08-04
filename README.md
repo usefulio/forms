@@ -4,10 +4,10 @@ Easy to use reactive forms with validation
 Global Api
 ---------------
 
-* `Forms.mixin(template, options)` - options is an object, at a minimum the app developer should be able to turn tempalate helpers and events on and off, other options that make sense should also be configurable via this object.
-* `Forms.mixins(options)` - options is an object, these helpers are added to the tmpl.form instance, but are not exposed as helpers
-* `Forms.helpers(helpers)` - helpers is an object, should behave like Template.x.helpers, these methods are added to the tmpl.form instance and also added as helpers
-* `Forms.events(events)` - events is an object, should behave like Template.x.events
+* `Forms.mixin(template, options)` - options is an object, at a minimum the app developer should be able to turn template helpers and events on and off, other options that make sense should also be configurable via this object.
+* `Forms.methods(methods)` - methods is an object of names to functions, these helpers are added to the tmpl.form instance, but are not exposed as helpers
+* `Forms.helpers(helpers)` - helpers is an object of names to functions, should behave like Template.x.helpers, these methods are added to the tmpl.form instance and also added as helpers
+* `Forms.events(events)` - events is an object of event selectors to functions, should behave like Template.x.events
 * `Forms.onCreated(callback)` - etc.
 * `Forms.onMixin(callback)` like onCreated, but callback is called during Forms.mixin invocation.
 * `Forms.instance()` alias for `Template.instance().form`
@@ -33,22 +33,22 @@ Each template instance which has been extended by the Forms library should provi
 * `tmpl.form.isValid([fieldName])` - sugar for `!_.any(tmpl.form.errors([fieldName]))`
 * `tmpl.form.isInvalid([fieldName])` - sugar for `_.any(tmpl.form.errors([fieldName]))`
 
-* `tmpl.form.invalidate([fieldName], errors, [eventTarget], [originalEvent])` - sugar for `tmpl.form.errors([fieldName,] errors)` if eventTarget is passed, will trigger a documentInvalid or propertyInvalid event, if the errors array is empty or null, clears errors for the doc or property
-* `tmpl.form.validate([fieldName], [eventTarget], [originalEvent])` - validates the current document or specified property against the current schema, if eventTarget is passed and the validated object or property is invalid, will trigger a documentInvalid or propertyInvalid event, calling this method will clear out any existing errors (for the doc or property being validated)
-* `tmpl.form.change(fieldName, fieldValue, [eventTarget], [originalEvent])1 - calls `tmpl.form.set`, if eventTarget is passed will also trigger a documentChanged event
-* `tmpl.form.change(changes, [eventTarget], [originalEvent])` - calls `tmpl.form.set` once for each key-value pair in the changes object, if eventTarget is passed will also trigger a single documentChanged event
-* `tmpl.form.submit([eventTarget], [originalEvent])` - performs the default submit action (validates document), if eventTarget is passed will also trigger a documentSubmit event, or if the form is invalid a documentInvalid event.
+* `tmpl.form.invalidate([fieldName], errors, [eventTarget], [originalEvent])` - sugar for `tmpl.form.errors([fieldName,] errors)` if `eventTarget` is passed, will trigger a `documentInvalid` or `propertyInvalid` event, if the errors array is empty or null, clears errors for the doc or property
+* `tmpl.form.validate([fieldName], [eventTarget], [originalEvent])` - validates the current document or specified property against the current schema, if `eventTarget` is passed and the validated object or property is invalid, will trigger a `documentInvalid` or `propertyInvalid` event, calling this method will clear out any existing errors (for the doc or property being validated)
+* `tmpl.form.change(fieldName, fieldValue, [eventTarget], [originalEvent])` - calls `tmpl.form.set`, if `eventTarget` is passed will also trigger a `documentChanged` event
+* `tmpl.form.change(changes, [eventTarget], [originalEvent])` - calls `tmpl.form.set` once for each key-value pair in the `changes` object, if `eventTarget` is passed will also trigger a single `documentChanged` event
+* `tmpl.form.submit([eventTarget], [originalEvent])` - performs the default submit action (validates document), if `eventTarget` is passed will also trigger a `documentSubmit` event, or if the form is invalid a `documentInvalid` event.
 
-Each of the above methods should check isDefaultPrevented and preventDefault if originalEvent is passed.
+Each of the above methods should check `isDefaultPrevented` and `preventDefault` if `originalEvent` is passed.
 
 Forms Events
 --------------
 
-* `$(field).trigger('propertyChange', changes)` - on input change, the forms package should trigger this event, changes is an object who's key-value pairs represent the properties which have changed. In theory changes should have only one key-value pair, however app developers should have the option to add as many key-value pairs as they like, if for example they want to store a date on three seperate properties, but are using a single input element for user input, then one `change` event would trigger a single `propertyChange` event with three key-value pairs, rather than triggering three events.
-* `$(field).trigger('documentChange', doc, changes)` - on propertyChange the forms package should trigger this event, changes is an object who's key-value pairs represent the properties which have changed.
-* `$(field).trigger('propertyInvalid', doc, errors)` - the forms package should trigger this event if this particular field was validated singally (e.g. by calling `tmpl.form.invalidate`), doc is the form doc, errors is an array of errors related to the property which is invalid.
-* `$(form).trigger('documentInvalid', doc, errors)` - the forms package should trigger time the doc is validated in the context of an event and the doc is invalid (e.g. form submit, `form.validate`, `form.invalidate`, etc.), doc and errors are as above, except that the errors array is not filtered by any fields.
-* `$(form).trigger('documentSubmit', doc)` - on form submit, or if the the app developer calls form.submit if the document is valid the forms package should trigger this event.
+* `$(field).trigger('propertyChange', [changes])` - on input change, the forms package should trigger this event, changes is an object who's key-value pairs represent the properties which have changed. In theory changes should have only one key-value pair, however app developers should have the option to add as many key-value pairs as they like, if for example they want to store a date on three seperate properties, but are using a single input element for user input, then one `change` event would trigger a single `propertyChange` event with three key-value pairs, rather than triggering three events.
+* `$(field).trigger('documentChange', [doc, changes])` - on propertyChange the forms package should trigger this event, changes is an object who's key-value pairs represent the properties which have changed.
+* `$(field).trigger('propertyInvalid', [doc, errors])` - the forms package should trigger this event if this particular field was validated singally (e.g. by calling `tmpl.form.invalidate`), doc is the form doc, errors is an array of errors related to the property which is invalid.
+* `$(form).trigger('documentInvalid', [doc, errors])` - the forms package should trigger time the doc is validated in the context of an event and the doc is invalid (e.g. form submit, `form.validate`, `form.invalidate`, etc.), doc and errors are as above, except that the errors array is not filtered by any fields.
+* `$(form).trigger('documentSubmit', [doc])` - on form submit, or if the the app developer calls `form.submit`, if the document is valid the forms package should trigger this event.
 
 
 Handled Events
@@ -79,7 +79,7 @@ var doc = function (fieldName, fieldValue) {
 
 all form helpers created via the `helpers` method should be stored in an undocumented `_helpers` object, and should also adhear to the following rules:
 
-1. Helpers don't override mixins when attached to the forms (e.g. if a helper and a mixin both exist with the same name, the helper should be attached to the Template.helpers, but not to tmpl.form)
+1. `Helpers` don't override `methods` when attached to the forms (e.g. if a `helper` and a `method` both exist with the same name, the `helper` should be attached to the Template.X.helpers, but not to `tmpl.form`)
 2. Each helper should be wrapped when attaching to the Template, like so:
 
 ```
