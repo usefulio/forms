@@ -1,16 +1,25 @@
-// Setup
 Forms.mixin(Template.simpleForm);
 Forms.mixin(Template.complexForm);
 
 // Utils
-function makeForm(formName, options) {
-  var div = $('<div>');
-  formName = formName || "simpleForm";
+function makeTemplate(formName) {
+  return new Template(Template[formName].renderFunction);
+}
+function makeForm(template, data, options) {
   options = options || {};
-  var view = Blaze.renderWithData(Template[formName], options, div[0]);
+  data = data || {};
+  template = template || "simpleForm";
+
+  if (_.isString(template))
+    template = Template[template];
+
+  var div = $('<div>');
+  var view = Blaze.renderWithData(template, data, div[0]);
   return {
     div: div,
-    templateInstance: view._domrange.members[0].view.templateInstance() // https://github.com/meteor/meteor/issues/2573#issuecomment-101099328
+    templateInstance: view._domrange.members[0].view.templateInstance(), // https://github.com/meteor/meteor/issues/2573#issuecomment-101099328
+    template: template,
+    view: view
     };
 }
 
@@ -250,12 +259,6 @@ Tinytest.add('Forms - Event detection - change event updates doc', function (tes
   test.equal(doc.get().doc.name, 'william');
 });
 
-Template.simpleForm.events({
-  'mockSubmit': function (e, tmpl) {
-    Forms.submit( e, tmpl );
-  }
-});
-
 Tinytest.add('Forms - Event detection - submit event is triggered', function (test) {
   var didCallHandler = false;
   var doc = new ReactiveVar({doc: {name: 'joe'}});
@@ -278,7 +281,14 @@ Tinytest.add('Forms - Event detection - submit event is triggered', function (te
 Tinytest.add('Forms - Event detection - submit method is called', function (test) {
   var didCallHandler = false;
   var doc = new ReactiveVar({doc: {name: 'joe'}});
-  var div = makeForm(null, function () {
+  var template = makeTemplate('simpleForm');
+  Forms.mixin(template);
+  template.events({
+    'mockSubmit': function (e, tmpl) {
+      Forms.submit( e, tmpl );
+    }
+  });
+  var div = makeForm(template, function () {
     return doc.get();
   }).div;
 
@@ -287,10 +297,6 @@ Tinytest.add('Forms - Event detection - submit method is called', function (test
       name: 'joe'
     });
     didCallHandler = true;
-  });
-
-  div.on('mockSubmit', function (e) {
-    test.equal(_.has(e, 'doc'), true);
   });
 
   div.find('input').trigger('mockSubmit');
