@@ -12,6 +12,14 @@ Global Api
 * `Forms.onMixin(callback)` like onCreated, but callback is called during Forms.mixin invocation.
 * `Forms.instance()` alias for `Template.instance().form`
 
+Instance state
+--------------
+A Forms instance stores state in three places:
+
+* `tmpl.form.doc` - The document being edited, under the hood we store this document in a ReactiveVar, we initialize this document from the data context, but you can also pass a default document in as part of the mixin options.
+* `tmpl.form.schema` - The schema for the document, an object who's keys contain validation rules to be run against the document at validation time. Under the hood we store this in a ReactiveVar, we initialize this object from the data context, but you can also pass in a default schema as part of the mixin options
+* `tmpl.form.errors` - A collection of errors, under the hood we store this as a null backed Mongo.Collection.
+
 Instance Api
 --------------
 
@@ -56,7 +64,7 @@ Handled Events
 
 The forms package should handle the following events, all event handlers should simply be passthrough methods to the relevant form helper, like so:
 
-* `input change` -> `form.change({[e.currentTarget.name]: e.currentTarget.value}, e.currentTarget, e);`
+* `change input` -> `form.change({[e.currentTarget.name]: e.currentTarget.value}, e.currentTarget, e);`
 * `propertyChange` `form.change(changes, e.currentTarget, e);`
 * `submit` -> `form.submit(e.currentTarget, e);`
 

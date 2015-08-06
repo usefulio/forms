@@ -32,6 +32,70 @@ function checkEntities(test, entities, expected) {
   }), expected);
 }
 
+Tinytest.add('Forms - Forms.mixin() - respects options.events === false', function (test) {
+  var template = makeTemplate('simpleForm');
+  Forms.mixin(template, {
+    events: false
+  });
+  test.equal(template.__eventMaps.length, 0);
+});
+
+Tinytest.add('Forms - Forms.mixin() - respects options.helpers === false', function (test) {
+  var template = makeTemplate('simpleForm');
+  Forms.mixin(template, {
+    helpers: false
+  });
+  test.equal(_.keys(template.__helpers).length, 0);
+});
+
+Tinytest.add('Forms - Forms.mixin() - sets default doc', function (test) {
+  var template = makeTemplate('simpleForm');
+  template.helpers({
+    value: function () { }
+  });
+  Forms.mixin(template, {
+    doc: {
+      isDefault: true
+    }
+  });
+  var ownDoc = new ReactiveVar(false);
+  var tmpl = makeForm(template, function () {
+    return ownDoc.get() ? {doc: { ownDoc: true } } : {};
+  }).templateInstance;
+  test.equal(tmpl.form.doc(), { isDefault: true });
+  ownDoc.set(true);
+  Tracker.flush();
+  test.equal(tmpl.form.doc(), { ownDoc: true });
+  ownDoc.set(false);
+  Tracker.flush();
+  tmpl.form.doc('myField', 'myValue');
+  test.equal(tmpl.form.doc(), { isDefault: true, myField: 'myValue' });
+});
+
+Tinytest.add('Forms - Forms.mixin() - sets default schema', function (test) {
+  var template = makeTemplate('simpleForm');
+  template.helpers({
+    value: function () { }
+  });
+  Forms.mixin(template, {
+    schema: {
+      isDefault: true
+    }
+  });
+  var ownDoc = new ReactiveVar(false);
+  var tmpl = makeForm(template, function () {
+    return ownDoc.get() ? {schema: { ownDoc: true } } : {};
+  }).templateInstance;
+  test.equal(tmpl.form.schema(), { isDefault: true });
+  ownDoc.set(true);
+  Tracker.flush();
+  test.equal(tmpl.form.schema(), { ownDoc: true });
+  ownDoc.set(false);
+  Tracker.flush();
+  tmpl.form.schema('myField', 'myValue');
+  test.equal(tmpl.form.schema(), { isDefault: true, myField: 'myValue' });
+});
+
 Tinytest.add('Forms - Forms.instance() - is accessible in helpers and events and on Template.instance()', function (test) {
   var template = makeTemplate('simpleForm');
   var didFire = 0;
