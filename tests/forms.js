@@ -1442,3 +1442,74 @@ Tinytest.add('Forms - Forms.events.submit - respects default prevented', functio
   div.find('form').trigger('submit');
   test.equal(didFire, false);
 });
+
+Tinytest.add('Forms - template tests - simple form', function (test) {
+  var template = makeTemplate('simpleForm');
+  template.helpers({ value: function (fieldName) {
+    if (_.isString(fieldName))
+      return Forms.instance().doc(fieldName);
+  }});
+  template.events({
+    'documentChange': function (e, tmpl, doc) {
+      test.equal(doc, expected);
+      didChange = true;
+    }
+    , 'documentSubmit': function (e, tmpl, doc) {
+      test.equal(doc, expected);
+      didSubmit = true;
+    }
+  });
+  Forms.mixin(template);
+  var div = makeForm(template, { doc: { name: 'myname' } }).div;
+  var expected = { name: 'myname' };
+  
+  var didChange = false;
+  var didSubmit = false;
+  div.find('input').trigger('change');
+  test.equal(didChange, true);
+
+  expected.name = 'othername';
+  didChange = false;
+  div.find('input').val('othername');
+  div.find('input').trigger('change');
+  test.equal(didChange, true);
+
+  div.find('form').trigger('submit');
+  test.equal(didSubmit, true);
+});
+
+Tinytest.add('Forms - template tests - complex form', function (test) {
+  var template = makeTemplate('complexForm');
+  template.helpers({ value: function (fieldName) {
+    if (_.isString(fieldName))
+      return Forms.instance().doc(fieldName);
+  }});
+  template.events({
+    'documentChange': function (e, tmpl, doc) {
+      test.equal(doc, expected);
+      didChange = true;
+    }
+    , 'documentSubmit': function (e, tmpl, doc) {
+      test.equal(doc, expected);
+      didSubmit = true;
+    }
+  });
+  Forms.mixin(template);
+  var div = makeForm(template, { doc: { name: 'myname' } }).div;
+  var expected = { name: 'myname' };
+  
+  var didChange = false;
+  var didSubmit = false;
+  div.find('input').trigger('change');
+  test.equal(didChange, true);
+
+  expected.name = 'othername';
+  didChange = false;
+  div.find('input').val('othername');
+  div.find('input').trigger('change');
+  test.equal(didChange, true);
+
+  div.find('form').trigger('submit');
+  test.equal(didSubmit, true);
+});
+
