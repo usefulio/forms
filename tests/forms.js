@@ -931,4 +931,299 @@ Tinytest.add('Forms - Forms.instance().isInvalid - is accessible as a template h
   test.equal(didFire, 3);
 });
 
+Tinytest.add('Forms - Forms.instance().change - updates the doc and triggers documentChange', function (test) {
+  var template = makeTemplate('simpleForm');
+  Forms.mixin(template);
+  template.helpers({ value: function () { } });
+  template.events({
+    'customEvent': function (e, tmpl) {
+      var form = Forms.instance();
+      form.change({
+        myField: 'myValue'
+      }, e.currentTarget);
+    }
+    , 'documentChange': function (e, tmpl, doc, changes) {
+      test.equal(doc, {
+        myField: 'myValue'
+        , otherField: 'otherValue'
+      });
+      test.equal(changes, {
+        myField: 'myValue'
+      });
+      didFire = true;
+    }
+  });
+  var div = makeForm(template, {
+    doc: {
+      otherField: 'otherValue'
+    }
+  }).div;
+  var didFire = false;
+  div.find('input').trigger('customEvent');
+  test.equal(didFire, true);
+});
 
+Tinytest.add('Forms - Forms.instance().change - accepts key and value arguments', function (test) {
+  var template = makeTemplate('simpleForm');
+  Forms.mixin(template);
+  template.helpers({ value: function () { } });
+  template.events({
+    'customEvent': function (e, tmpl) {
+      var form = Forms.instance();
+      form.change('myField', 'myValue', e.currentTarget);
+    }
+    , 'documentChange': function (e, tmpl, doc, changes) {
+      test.equal(doc, {
+        myField: 'myValue'
+        , otherField: 'otherValue'
+      });
+      test.equal(changes, {
+        myField: 'myValue'
+      });
+      didFire = true;
+    }
+  });
+  var div = makeForm(template, {
+    doc: {
+      otherField: 'otherValue'
+    }
+  }).div;
+  var didFire = false;
+  div.find('input').trigger('customEvent');
+  test.equal(didFire, true);
+});
+
+Tinytest.add('Forms - Forms.instance().change - calls prevent default', function (test) {
+  var template = makeTemplate('simpleForm');
+  Forms.mixin(template);
+  template.helpers({ value: function () { } });
+  template.events({
+    'customEvent': function (e, tmpl) {
+      var form = Forms.instance();
+      form.change({
+        myField: 'myValue'
+      }, e.currentTarget, e);
+      test.isTrue(e.isDefaultPrevented());
+    }
+    , 'documentChange': function (e, tmpl, doc, changes) {
+      test.equal(doc, {
+        myField: 'myValue'
+        , otherField: 'otherValue'
+      });
+      test.equal(changes, {
+        myField: 'myValue'
+      });
+      didFire = true;
+    }
+  });
+  var didFire = false;
+  var div = makeForm(template, {
+    doc: {
+      otherField: 'otherValue'
+    }
+  }).div;
+  div.find('input').trigger('customEvent');
+  test.equal(didFire, true);
+});
+
+Tinytest.add('Forms - Forms.instance().change - respects prevent default', function (test) {
+  var template = makeTemplate('simpleForm');
+  Forms.mixin(template);
+  template.helpers({ value: function () { } });
+  template.events({
+    'customEvent': function (e, tmpl) {
+      var form = Forms.instance();
+      e.preventDefault();
+      form.change({
+        myField: 'myValue'
+      }, e.currentTarget, e);
+    }
+    , 'documentChange': function (e, tmpl, doc, changes) {
+      test.equal(doc, {
+        myField: 'myValue'
+        , otherField: 'otherValue'
+      });
+      test.equal(changes, {
+        myField: 'myValue'
+      });
+      didFire = true;
+    }
+  });
+  var didFire = false;
+  var div = makeForm(template, {
+    doc: {
+      otherField: 'otherValue'
+    }
+  }).div;
+  div.find('input').trigger('customEvent');
+  test.equal(didFire, false);
+});
+
+Tinytest.add('Forms - Forms.instance().change - does not trigger if missing eventTarget', function (test) {
+  var template = makeTemplate('simpleForm');
+  var form;
+  Forms.mixin(template);
+  template.helpers({ value: function () { } });
+  template.events({
+    'customEvent': function (e, tmpl) {
+      form = Forms.instance();
+      form.change({
+        myField: 'myValue'
+      }, e);
+    }
+    , 'documentChange': function (e, tmpl, doc, changes) {
+      test.equal(doc, {
+        myField: 'myValue'
+        , otherField: 'otherValue'
+      });
+      test.equal(changes, {
+        myField: 'myValue'
+      });
+      didFire = true;
+    }
+  });
+  var didFire = false;
+  var div = makeForm(template, {
+    doc: {
+      otherField: 'otherValue'
+    }
+  }).div;
+  div.find('input').trigger('customEvent');
+  test.equal(didFire, false);
+  test.equal(form.doc('myField'), 'myValue');
+});
+
+Tinytest.add('Forms - Forms.instance().invalidate - inserts errors and triggers documentInvalid', function (test) {
+  var template = makeTemplate('simpleForm');
+  Forms.mixin(template);
+  template.helpers({ value: function () { } });
+  template.events({
+    'customEvent': function (e, tmpl) {
+      var form = Forms.instance();
+      form.invalidate([{
+        message: 'invalid'
+      }], e.currentTarget);
+    }
+    , 'documentInvalid': function (e, tmpl, doc, errors) {
+      test.equal(doc, {
+        otherField: 'otherValue'
+      });
+      checkEntities(test, errors, [{message: 'invalid'}]);
+      didFire = true;
+    }
+  });
+  var div = makeForm(template, {
+    doc: {
+      otherField: 'otherValue'
+    }
+  }).div;
+  var didFire = false;
+  div.find('input').trigger('customEvent');
+  test.equal(didFire, true);
+});
+
+Tinytest.add('Forms - Forms.instance().invalidate - inserts property errors and triggers propertyInvalid', function (test) {
+  var template = makeTemplate('simpleForm');
+  Forms.mixin(template);
+  template.helpers({ value: function () { } });
+  template.events({
+    'customEvent': function (e, tmpl) {
+      var form = Forms.instance();
+      form.errors([{message: 'x'}]);
+      form.invalidate('myField', [{
+        message: 'invalid'
+      }], e.currentTarget);
+    }
+    , 'propertyInvalid': function (e, tmpl, doc, errors) {
+      test.equal(doc, {
+        otherField: 'otherValue'
+      });
+      checkEntities(test, errors, [{name: 'myField', message: 'invalid'}]);
+      didFire = true;
+    }
+  });
+  var div = makeForm(template, {
+    doc: {
+      otherField: 'otherValue'
+    }
+  }).div;
+  var didFire = false;
+  div.find('input').trigger('customEvent');
+  test.equal(didFire, true);
+});
+
+Tinytest.add('Forms - Forms.instance().validate - runs schema validation and triggers documentInvalid', function (test) {
+  var template = makeTemplate('simpleForm');
+  Forms.mixin(template);
+  template.helpers({ value: function () { } });
+  template.events({
+    'customEvent': function (e, tmpl) {
+      var form = Forms.instance();
+      var errors = form.validate(e.currentTarget);
+      checkEntities(test, errors, [{name: 'otherField', message: 'invalid'}]);
+    }
+    , 'documentInvalid': function (e, tmpl, doc, errors) {
+      test.equal(doc, {
+        otherField: 'otherValue'
+      });
+      checkEntities(test, errors, [{name: 'otherField', message: 'invalid'}]);
+      didFire = true;
+    }
+  });
+  var div = makeForm(template, {
+    doc: {
+      otherField: 'otherValue'
+    }
+    , schema: {
+      otherField: function () {
+        return 'invalid';
+      }
+    }
+  }).div;
+  var didFire = false;
+  div.find('input').trigger('customEvent');
+  test.equal(didFire, true);
+});
+
+Tinytest.add('Forms - Forms.instance().submit - validates document and triggers documentSubmit', function (test) {
+  var template = makeTemplate('simpleForm');
+  Forms.mixin(template);
+  template.helpers({ value: function () { } });
+  template.events({
+    'customEvent': function (e, tmpl) {
+      var form = Forms.instance();
+      form.submit(e.currentTarget);
+    }
+    , 'documentInvalid': function (e, tmpl, doc, errors) {
+      test.equal(doc, {
+        otherField: 'otherValue'
+      });
+      checkEntities(test, errors, [{name: 'otherField', message: 'invalid'}]);
+      invalidDidFire = true;
+    }
+    , 'documentSubmit': function (e, tmpl, doc) {
+      test.equal(doc, {
+        otherField: 'otherValue'
+      });
+      submitDidfire = true;
+    }
+  });
+  var isValid;
+  var div = makeForm(template, {
+    doc: {
+      otherField: 'otherValue'
+    }
+    , schema: {
+      otherField: function () {
+        return isValid ? true : 'invalid';
+      }
+    }
+  }).div;
+  var invalidDidFire = false;
+  var submitDidfire = false;
+  div.find('input').trigger('customEvent');
+  test.equal(invalidDidFire, true);
+  isValid = true;
+  div.find('input').trigger('customEvent');
+  test.equal(submitDidfire, true);
+});
