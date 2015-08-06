@@ -59,6 +59,10 @@ Tinytest.add('Forms - Forms.instance() - is accessible in helpers and events and
   test.equal(didFire, 2);
 });
 
+Tinytest.add('Forms - Forms.instance() - returns null when called outside of template context', function (test) {
+  test.isNull(Forms.instance());
+});
+
 Tinytest.add('Forms - Forms.instance().doc - returns a reactive clone of this.doc', function (test) {
   var template = makeTemplate('simpleForm');
   var didFire = 0;
