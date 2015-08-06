@@ -1,6 +1,10 @@
 Forms.mixin(Template.simpleForm);
 Forms.mixin(Template.complexForm);
 
+Template.simpleForm.helpers({
+  value: function () { }
+});
+
 // Utils
 function makeTemplate(formName) {
   return new Template(Template[formName].renderFunction);
@@ -1226,4 +1230,147 @@ Tinytest.add('Forms - Forms.instance().submit - validates document and triggers 
   isValid = true;
   div.find('input').trigger('customEvent');
   test.equal(submitDidfire, true);
+});
+
+Tinytest.add('Forms - Forms.events.change - triggers propertyChange event', function (test) {
+  var template = makeTemplate('simpleForm');
+  Forms.mixin(template);
+  template.helpers({ value: function () { } });
+  template.events({
+    'propertyChange': function (e, tmpl, changes) {
+      test.equal(changes, {name: 'myname'});
+      didFire = true;
+    }
+  });
+  var div = makeForm(template).div;
+  var didFire = false;
+
+  div.find('input').val('myname');
+  div.find('input').trigger('change');
+  test.equal(didFire, true);
+});
+
+Tinytest.add('Forms - Forms.events.change - works with nested forms', function (test) {
+  var template = makeTemplate('nestedForm');
+  Forms.mixin(template);
+  template.helpers({ value: function () { } });
+  template.events({
+    'change': function (e, tmpl, doc) {
+      didFire = true;
+    }
+    , 'documentChange': function (e, tmpl) {
+      test.equal(tmpl.form.doc(), {});
+    }
+  });
+  var div = makeForm(template).div;
+  var didFire = false;
+
+  div.find('input').val('myname');
+  div.find('input').trigger('change');
+  test.equal(didFire, false);
+});
+
+Tinytest.add('Forms - Forms.events.propertyChange - updates the doc and triggers documentChange', function (test) {
+  var template = makeTemplate('simpleForm');
+  Forms.mixin(template);
+  template.helpers({ value: function () { } });
+  template.events({
+    'documentChange': function (e, tmpl, doc) {
+      test.equal(doc, {name: 'myname'});
+      didFire = true;
+    }
+  });
+  var div = makeForm(template).div;
+  var didFire = false;
+
+  div.find('input').trigger('propertyChange', {
+    name: 'myname'
+  });
+  test.equal(didFire, true);
+});
+
+Tinytest.add('Forms - Forms.events.propertyChange - respects default prevented', function (test) {
+  var template = makeTemplate('simpleForm');
+  template.helpers({ value: function () { } });
+  template.events({
+    'propertyChange': function (e, tmpl) {
+      e.preventDefault();
+    }
+    , 'documentChange': function (e, tmpl, doc) {
+      didFire = true;
+    }
+  });
+  Forms.mixin(template);
+  var div = makeForm(template).div;
+  var didFire = false;
+
+  div.find('input').trigger('propertyChange', {
+    name: 'myname'
+  });
+  test.equal(didFire, false);
+});
+
+Tinytest.add('Forms - Forms.events.propertyChange - works with nested forms', function (test) {
+  var template = makeTemplate('nestedForm');
+  Forms.mixin(template);
+  template.helpers({ value: function () { } });
+  template.events({
+    'documentChange': function (e, tmpl, doc) {
+      // This event should be triggered by the inner form, which should be the
+      // only form which was affected by the propertyChange event we triggered
+      // below.
+
+      var form = Forms.instance();
+      var ownDoc = form.doc();
+      test.equal(doc, {
+        name: 'myname'
+      });
+      test.equal(ownDoc, {});
+      didFire = true;
+    }
+  });
+  var div = makeForm(template).div;
+  var didFire = false;
+
+  div.find('input').trigger('propertyChange', {
+    name: 'myname'
+  });
+  test.equal(didFire, true);
+});
+
+Tinytest.add('Forms - Forms.events.submit - validates the doc and triggers documentSubmit', function (test) {
+  var template = makeTemplate('simpleForm');
+  Forms.mixin(template);
+  template.helpers({ value: function () { } });
+  template.events({
+    'documentSubmit': function (e, tmpl, doc) {
+      test.equal(doc, {name: 'myname'});
+      didFire = true;
+    }
+  });
+  var div = makeForm(template, { doc: { name: 'myname' } }).div;
+  var didFire = false;
+
+  div.find('form').trigger('submit');
+  test.equal(didFire, true);
+});
+
+Tinytest.add('Forms - Forms.events.submit - respects default prevented', function (test) {
+  var template = makeTemplate('simpleForm');
+  template.helpers({ value: function () { } });
+  template.events({
+    'submit': function (e, tmpl) {
+      e.preventDefault();
+    }
+    , 'documentSubmit': function (e, tmpl, doc) {
+      test.equal(doc, {name: 'myname'});
+      didFire = true;
+    }
+  });
+  Forms.mixin(template);
+  var div = makeForm(template, { doc: { name: 'myname' } }).div;
+  var didFire = false;
+
+  div.find('form').trigger('submit');
+  test.equal(didFire, false);
 });
