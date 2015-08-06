@@ -22,332 +22,913 @@ function makeForm(template, data, options) {
     view: view
     };
 }
+function checkEntities(test, entities, expected) {
+  test.equal(_.map(entities, function (entity) {
+    return _.omit(entity, '_id');
+  }), expected);
+}
 
-Tinytest.add('Forms - initial data', function (test) {
-  var div = makeForm(null, {doc: {name: 'joe'}}).div;
-
-  test.equal(div.find('input').val(), 'joe');
-});
-
-Tinytest.add('Forms - reactive data', function (test) {
-  var doc = new ReactiveVar({doc: {name: 'joe'}});
-  var div = makeForm(null, function () {
-    return doc.get();
-  }).div;
-
-  doc.set({
-    doc: {
-      name: 'sam'
-    }
-  });
-
-  Tracker.flush();
-  test.equal(div.find('input').val(), 'sam');
-});
-
-Tinytest.add('Forms - propertyChange event updates doc', function (test) {
-  var doc = new ReactiveVar({doc: {name: 'joe'}});
-  var div = makeForm(null, function () {
-    return doc.get();
-  }).div;
-
-  div.find('input').val('william');
-  div.find('input').trigger('propertyChange');
-
-  Tracker.flush();
-  test.equal(div.find('input').val(), 'william');
-});
-
-Tinytest.add('Forms - custom change values updates doc', function (test) {
-  var doc = new ReactiveVar({doc: {name: 'joe'}});
-  var div = makeForm(null, function () {
-    return doc.get();
-  }).div;
-
-  div.find('input').val('william');
-  Forms.trigger('propertyChange', div.find('input'), {
-    propertyName: 'name'
-    , propertyValue: 'bill'
-  });
-
-  Tracker.flush();
-  test.equal(div.find('input').val(), 'bill');
-});
-
-Tinytest.add('Forms - documentChange event is triggered', function (test) {
-  var didCallHandler = false;
-  var doc = new ReactiveVar({doc: {name: 'joe'}});
-  var div = makeForm(null, function () {
-    return doc.get();
-  }).div;
-
-  div.on('documentChange', function (e) {
-    e.preventDefault();
-    test.equal(e.doc, {
-      name: 'joe'
-    });
-    didCallHandler = true;
-  });
-
-  div.find('input').val('joe');
-  div.find('input').trigger('change');
-
-  test.equal(didCallHandler, true);
-});
-
-Tinytest.add('Forms - documentSubmit event is triggered', function (test) {
-  var didCallHandler = false;
-  var doc = new ReactiveVar({doc: {name: 'joe'}});
-  var div = makeForm(null, function () {
-    return doc.get();
-  }).div;
-
-  div.on('documentSubmit', function (e) {
-    test.equal(e.doc, {
-      name: 'joe'
-    });
-    didCallHandler = true;
-  });
-
-  div.find('form').trigger('submit');
-  test.equal(didCallHandler, true);
-});
-
-Tinytest.add('Forms - documentSubmit event is not triggered when form is invalid', function (test) {
-  var didCallHandler = false;
-  var doc = new ReactiveVar({doc: {name: 'joe'}, schema: {name: function () {return false;}}});
-  var div = makeForm(null, function () {
-    return doc.get();
-  }).div;
-
-  div.on('documentSubmit', function (e) {
-    e.preventDefault();
-    test.equal(e.doc, {
-      name: 'joe'
-    });
-    didCallHandler = true;
-  });
-
-  div.find('form').trigger('submit');
-  test.equal(didCallHandler, false);
-});
-
-Tinytest.add('Forms - documentInvalid event is triggered when form is invalid', function (test) {
-  var didCallHandler = false;
-  var doc = new ReactiveVar({doc: {name: 'joe'}, schema: {name: function () {return false;}}});
-  var div = makeForm(null, function () {
-    return doc.get();
-  }).div;
-
-  div.on('documentInvalid', function (e) {
-    e.preventDefault();
-    test.equal(e.doc, {
-      name: 'joe'
-    });
-    didCallHandler = true;
-  });
-
-  div.find('form').trigger('submit');
-  test.equal(didCallHandler, true);
-});
-
-Tinytest.add('Forms - submit event recieves errors when form is invalid', function (test) {
-  var didCallHandler = false;
-  var doc = new ReactiveVar({doc: {name: 'joe'}, schema: {name: function () {return false;}}});
-  var div = makeForm(null, function () {
-    return doc.get();
-  }).div;
-
-  div.on('submit', function (e) {
-    test.equal(e.doc, {
-      name: 'joe'
-    });
-    test.equal(_.pluck(e.errors, 'name'), ['name']);
-    didCallHandler = true;
-  });
-
-  div.find('form').trigger('submit');
-  test.equal(didCallHandler, true);
-});
-
-Tinytest.add('Forms - documentInvalid event recieves errors', function (test) {
-  var didCallHandler = false;
-  var doc = new ReactiveVar({doc: {name: 'joe'}, schema: {name: function () {return false;}}});
-  var div = makeForm(null, function () {
-    return doc.get();
-  }).div;
-
-  div.on('documentInvalid', function (e) {
-    test.equal(e.doc, {
-      name: 'joe'
-    });
-    test.equal(_.pluck(e.errors, 'name'), ['name']);
-    didCallHandler = true;
-  });
-
-  div.find('form').trigger('submit');
-  test.equal(didCallHandler, true);
-});
-
-Tinytest.add('Forms - nested data', function (test) {
-  var div = makeForm(null, {doc: { profile: { name: 'joe'}, emails: ['joe@example.com']}}).div;
-
-  Blaze._withCurrentView(Blaze.getView(div.find('input')[0]), function () {
-    test.equal(Forms.call('value', 'profile.name'), 'joe');
-    test.equal(Forms.call('value', 'emails[0]'), 'joe@example.com');
-    var doc = {};
-    Forms.set(doc, 'profile.name', 'joe');
-    Forms.set(doc, 'emails[0]', 'joe@example.com');
-    Forms.set(doc, 'profile.emails[0].address', 'joe@example.com');
-    test.equal(doc, {
-      profile: {
-        name: 'joe'
-        , emails: [{
-          address: 'joe@example.com'
-        }]
-      }
-      , emails: [
-        'joe@example.com'
-      ]
-    });
-    test.equal(Forms.get(doc, 'profile.name'), 'joe');
-    test.equal(Forms.get(doc, 'emails[0]'), 'joe@example.com');
-    test.equal(Forms.get(doc, 'profile.emails[0].address'), 'joe@example.com');
-  });
-});
-
-Tinytest.add('Forms - form helper', function (test) {
-  var div = makeForm('complexForm', {doc: {name: 'joe'}}).div;
-
-  test.equal(div.find('input').val(), 'joe');
-});
-
-Tinytest.add('Forms - reactive form helper', function (test) {
-  var doc = new ReactiveVar({doc: {name: 'joe'}});
-  var div = makeForm('complexForm', function () {
-    return doc.get();
-  }).div;
-
-  doc.set({
-    doc: {
-      name: 'sam'
-    }
-  });
-
-  Tracker.flush();
-  test.equal(div.find('input').val(), 'sam');
-});
-
-// ####################################################################
-// ####################################################################
-// Form event triggering tests
-
-
-// ####################################################################
-// ####################################################################
-// Form event detection tests
-Tinytest.add('Forms - Event detection - change event updates doc', function (test) {
-  var doc = new ReactiveVar({doc: {name: 'joe'}});
-  var div = makeForm(null, function () {
-    return doc.get();
-  }).div;
-
-  div.find('input').val('william');
-  div.find('input').trigger('change');
-
-  Tracker.flush();
-  test.equal(doc.get().doc.name, 'william');
-});
-
-Tinytest.add('Forms - Event detection - submit event is triggered', function (test) {
-  var didCallHandler = false;
-  var doc = new ReactiveVar({doc: {name: 'joe'}});
-  var div = makeForm(null, function () {
-    return doc.get();
-  }).div;
-
-  div.on('submit', function (e) {
-    e.preventDefault();
-    test.equal(e.doc, {
-      name: 'joe'
-    });
-    didCallHandler = true;
-  });
-
-  div.find('form').trigger('submit');
-  test.equal(didCallHandler, true);
-});
-
-Tinytest.add('Forms - Event detection - submit method is called', function (test) {
-  var didCallHandler = false;
-  var doc = new ReactiveVar({doc: {name: 'joe'}});
+Tinytest.add('Forms - Forms.instance() - is accessible in helpers and events and on Template.instance()', function (test) {
   var template = makeTemplate('simpleForm');
+  var didFire = 0;
   Forms.mixin(template);
+  template.helpers({
+    value: function () {
+      var tmpl = Template.instance();
+      test.isTrue(_.isObject(Forms.instance()));
+      test.isTrue(_.isObject(tmpl.form));
+      test.equal(Forms.instance(), tmpl.form);
+      didFire++;
+    }
+    , error: function () {}
+  });
   template.events({
-    'mockSubmit': function (e, tmpl) {
-      Forms.submit( e, tmpl );
+    'customEvent': function (e, tmpl) {
+      test.isTrue(_.isObject(Forms.instance()));
+      test.isTrue(_.isObject(tmpl.form));
+      test.equal(Forms.instance(), tmpl.form);
+      didFire++;
     }
   });
-  var div = makeForm(template, function () {
-    return doc.get();
-  }).div;
+  var dom = makeForm(template);
+  dom.div.find('input').trigger('customEvent');
+  test.equal(didFire, 2);
+});
 
-  div.on('documentSubmit', function (e) {
-    test.equal(e.doc, {
-      name: 'joe'
-    });
-    didCallHandler = true;
+Tinytest.add('Forms - Forms.instance().doc - returns a reactive clone of this.doc', function (test) {
+  var template = makeTemplate('simpleForm');
+  var didFire = 0;
+  Forms.mixin(template);
+  template.helpers({
+    value: function () {
+      var form = Forms.instance();
+      var doc = form.doc();
+
+      test.equal(doc, {
+        iteration: didFire
+      });
+
+      didFire++;
+    }
+    , error: function () {}
+  });
+  var dep = new Tracker.Dependency();
+  var dom = makeForm(template, function () {
+    dep.depend();
+    return {
+      doc: {
+        iteration: didFire
+      }
+    };
+  });
+  dep.changed();
+  // Tracker.flush() is necessary because dep.changed does not trigger an 
+  // immediate rerun of computations, this ensures that our helper above
+  // runs the second time synchronously
+  Tracker.flush();
+  test.equal(didFire, 2);
+});
+
+Tinytest.add('Forms - Forms.instance().doc - is accessible as a template helper', function (test) {
+  var template = makeTemplate('simpleForm');
+  var form;
+  var didFire = 0;
+  Forms.mixin(template);
+  template.helpers({
+    value: function () {
+      form = Forms.instance();
+      var docHelper = Blaze.getView().lookup('doc');
+      test.equal(docHelper.call(this), didFire ? { test: didFire } : {});
+      test.equal(docHelper.call(this, 'test'), didFire || undefined);
+      didFire++;
+    }
+    , error: function () {}
+  });
+  var dom = makeForm(template, {
+    doc: {}
+  });
+  form.doc('test', didFire);
+  Tracker.flush();
+  test.equal(didFire, 2);
+});
+
+Tinytest.add('Forms - Forms.instance().doc - sets the document', function (test) {
+  var template = makeTemplate('simpleForm');
+  var didFire = 0;
+  var formInstance;
+  Forms.mixin(template);
+  template.helpers({
+    value: function () {
+      formInstance = Forms.instance();
+      var doc = formInstance.doc();
+
+      test.equal(doc, {
+        iteration: didFire
+      });
+
+      didFire++;
+    }
+    , error: function () {}
+  });
+  var dom = makeForm(template, function () {
+    return {
+      doc: {
+        iteration: 0
+      }
+    };
+  });
+  formInstance.doc({iteration: 1});
+  // Tracker.flush() is necessary because dep.changed does not trigger an 
+  // immediate rerun of computations, this ensures that our helper above
+  // runs the second time synchronously
+  Tracker.flush();
+  test.equal(didFire, 2);
+});
+
+Tinytest.add('Forms - Forms.instance().doc - gets and sets a reactive document property', function (test) {
+  var template = makeTemplate('simpleForm');
+  var didFire = 0;
+  var formInstance;
+  Forms.mixin(template);
+  template.helpers({
+    value: function () {
+      formInstance = Forms.instance();
+
+      test.equal(formInstance.doc('iteration'), didFire);
+
+      didFire++;
+    }
+    , error: function () {}
+  });
+  var dom = makeForm(template, function () {
+    return {
+      doc: {
+        iteration: 0
+      }
+    };
+  });
+  formInstance.doc('iteration', 1);
+  // Tracker.flush() is necessary because dep.changed does not trigger an 
+  // immediate rerun of computations, this ensures that our helper above
+  // runs the second time synchronously
+  Tracker.flush();
+  test.equal(didFire, 2);
+});
+
+Tinytest.add('Forms - Forms.instance().doc - throws on invalid arguments', function (test) {
+  var template = makeTemplate('simpleForm');
+  var formInstance;
+  Forms.mixin(template);
+  template.helpers({
+    value: function () {
+      formInstance = Forms.instance();
+    }
+    , error: function () {}
+  });
+  var dom = makeForm(template, function () {
+    return {
+      doc: {
+        iteration: 0
+      }
+    };
   });
 
-  div.find('input').trigger('mockSubmit');
+  test.throws(function () {
+    formInstance.doc({}, {});
+  });
 
-  test.equal(didCallHandler, true);
+  test.throws(function () {
+    formInstance.doc('name', {}, {});
+  });
+
+  test.throws(function () {
+    formInstance.doc(null);
+  });
+
+  test.throws(function () {
+    formInstance.doc(undefined);
+  });
+
+  test.throws(function () {
+    formInstance.doc('');
+  });
+
+  test.throws(function () {
+    formInstance.doc(null);
+  });
 });
 
-// ####################################################################
-// ####################################################################
-// Form validation tests
+Tinytest.add('Forms - Forms.instance().schema - returns a reactive clone of this.schema', function (test) {
+  var template = makeTemplate('simpleForm');
+  var didFire = 0;
+  Forms.mixin(template);
+  template.helpers({
+    value: function () {
+      var form = Forms.instance();
+      var schema = form.schema();
 
-Tinytest.add('Forms - Validation - custom validators - reactive error message displayed', function (test) {
-  var doc = new ReactiveVar({doc: {name: 'joe'}, schema: {name: function () {return false;}}});
-  var div = makeForm(null, function () {
-    return doc.get();
-  }).div;
+      test.equal(schema, {
+        iteration: didFire
+      });
 
-  div.find('form').trigger('submit');
-
+      didFire++;
+    }
+    , error: function () {}
+  });
+  var dep = new Tracker.Dependency();
+  var dom = makeForm(template, function () {
+    dep.depend();
+    return {
+      schema: {
+        iteration: didFire
+      }
+    };
+  });
+  dep.changed();
+  // Tracker.flush() is necessary because dep.changed does not trigger an 
+  // immediate rerun of computations, this ensures that our helper above
+  // runs the second time synchronously
   Tracker.flush();
-  test.equal(div.find('.error').text(), 'invalid');
+  test.equal(didFire, 2);
 });
 
-Tinytest.add('Forms - Validation - custom validators - custom error message displayed', function (test) {
-  var doc = new ReactiveVar({doc: {name: 'joe'}, schema: {name: function () {return 'not valid';}}});
-  var div = makeForm(null, function () {
-    return doc.get();
-  }).div;
-
-  div.find('form').trigger('submit');
-
+Tinytest.add('Forms - Forms.instance().schema - is accessible as a template helper', function (test) {
+  var template = makeTemplate('simpleForm');
+  var form;
+  var didFire = 0;
+  Forms.mixin(template);
+  template.helpers({
+    value: function () {
+      form = Forms.instance();
+      var schemaHelper = Blaze.getView().lookup('schema');
+      test.equal(schemaHelper.call(this), didFire ? { test: didFire } : {});
+      test.equal(schemaHelper.call(this, 'test'), didFire || undefined);
+      didFire++;
+    }
+    , error: function () {}
+  });
+  var dom = makeForm(template, {
+    schema: {}
+  });
+  form.schema('test', didFire);
   Tracker.flush();
-  test.equal(div.find('.error').text(), 'not valid');
+  test.equal(didFire, 2);
 });
 
-Tinytest.add('Forms - Validation - built-in validators - "unknown validation rule" error is thrown', function (test) {
-  var errorThrown = false;
+Tinytest.add('Forms - Forms.instance().schema - sets the schema', function (test) {
+  var template = makeTemplate('simpleForm');
+  var didFire = 0;
+  var formInstance;
+  Forms.mixin(template);
+  template.helpers({
+    value: function () {
+      formInstance = Forms.instance();
+      var schema = formInstance.schema();
 
-  var doc = new ReactiveVar({doc: {name: 'joe'}, schema: {'name': {'INVALIDTYPE': 'some options'}} });
-  var div = makeForm(null, function () {
-    return doc.get();
-  }).div;
+      test.equal(schema, {
+        iteration: didFire
+      });
 
-  try {
-      div.find('form').trigger('submit');
-  } catch (err) {
-    if (err && err.error === "unknown-validation-rule")
-      errorThrown = true;
-  }
-
+      didFire++;
+    }
+    , error: function () {}
+  });
+  var dom = makeForm(template, function () {
+    return {
+      schema: {
+        iteration: 0
+      }
+    };
+  });
+  formInstance.schema({iteration: 1});
+  // Tracker.flush() is necessary because dep.changed does not trigger an 
+  // immediate rerun of computations, this ensures that our helper above
+  // runs the second time synchronously
   Tracker.flush();
-
-  test.isTrue(errorThrown, "unknown rule detecion failed");
+  test.equal(didFire, 2);
 });
+
+Tinytest.add('Forms - Forms.instance().schema - gets and sets a reactive schema property', function (test) {
+  var template = makeTemplate('simpleForm');
+  var didFire = 0;
+  var formInstance;
+  Forms.mixin(template);
+  template.helpers({
+    value: function () {
+      formInstance = Forms.instance();
+
+      test.equal(formInstance.schema('iteration'), didFire);
+
+      didFire++;
+    }
+    , error: function () {}
+  });
+  var dom = makeForm(template, function () {
+    return {
+      schema: {
+        iteration: 0
+      }
+    };
+  });
+  formInstance.schema('iteration', 1);
+  // Tracker.flush() is necessary because dep.changed does not trigger an 
+  // immediate rerun of computations, this ensures that our helper above
+  // runs the second time synchronously
+  Tracker.flush();
+  test.equal(didFire, 2);
+});
+
+Tinytest.add('Forms - Forms.instance().schema - throws on invalid arguments', function (test) {
+  var template = makeTemplate('simpleForm');
+  var formInstance;
+  Forms.mixin(template);
+  template.helpers({
+    value: function () {
+      formInstance = Forms.instance();
+    }
+    , error: function () {}
+  });
+  var dom = makeForm(template, function () {
+    return {
+      schema: {
+        iteration: 0
+      }
+    };
+  });
+
+  test.throws(function () {
+    formInstance.schema({}, {});
+  });
+
+  test.throws(function () {
+    formInstance.schema('name', {}, {});
+  });
+
+  test.throws(function () {
+    formInstance.schema(null);
+  });
+
+  test.throws(function () {
+    formInstance.schema(undefined);
+  });
+
+  test.throws(function () {
+    formInstance.schema('');
+  });
+
+  test.throws(function () {
+    formInstance.schema(null);
+  });
+});
+
+Tinytest.add('Forms - Forms.instance().get - is an alias for doc get', function (test) {
+  var template = makeTemplate('simpleForm');
+  var didFire = 0;
+  var formInstance;
+  Forms.mixin(template);
+  template.helpers({
+    value: function () {
+      formInstance = Forms.instance();
+
+      test.equal(formInstance.get(), {iteration: didFire});
+      test.equal(formInstance.get('iteration'), didFire);
+
+      didFire++;
+    }
+    , error: function () {}
+  });
+  var dom = makeForm(template, function () {
+    return {
+      doc: {
+        iteration: 0
+      }
+    };
+  });
+  formInstance.doc('iteration', 1);
+  // Tracker.flush() is necessary because dep.changed does not trigger an 
+  // immediate rerun of computations, this ensures that our helper above
+  // runs the second time synchronously
+  Tracker.flush();
+  test.equal(formInstance.get('iteration'), 1);
+  test.equal(didFire, 2);
+});
+
+Tinytest.add('Forms - Forms.instance().get - throws on invalid arguments', function (test) {
+  var template = makeTemplate('simpleForm');
+  var formInstance;
+  Forms.mixin(template);
+  template.helpers({
+    value: function () {
+      formInstance = Forms.instance();
+    }
+    , error: function () {}
+  });
+  var dom = makeForm(template, function () {
+    return {
+      doc: {
+        iteration: 0
+      }
+    };
+  });
+
+  test.throws(function () {
+    formInstance.get({}, {});
+  });
+
+  test.throws(function () {
+    formInstance.get(null);
+  });
+
+  test.throws(function () {
+    formInstance.get(undefined);
+  });
+
+  test.throws(function () {
+    formInstance.get('');
+  });
+
+  test.throws(function () {
+    formInstance.get(null);
+  });
+});
+
+Tinytest.add('Forms - Forms.instance().set - is an alias for doc set', function (test) {
+  var template = makeTemplate('simpleForm');
+  var didFire = 0;
+  var formInstance;
+  Forms.mixin(template);
+  template.helpers({
+    value: function () {
+      formInstance = Forms.instance();
+
+      test.equal(formInstance.doc('iteration'), didFire);
+
+      didFire++;
+    }
+    , error: function () {}
+  });
+  var dom = makeForm(template, function () {
+    return {
+      doc: {
+        iteration: 0
+      }
+    };
+  });
+  formInstance.set('iteration', 1);
+  // Tracker.flush() is necessary because dep.changed does not trigger an 
+  // immediate rerun of computations, this ensures that our helper above
+  // runs the second time synchronously
+  Tracker.flush();
+  formInstance.set({'iteration': 2});
+  Tracker.flush();
+  test.equal(didFire, 3);
+});
+
+Tinytest.add('Forms - Forms.instance().set - throws on invalid arguments', function (test) {
+  var template = makeTemplate('simpleForm');
+  var formInstance;
+  Forms.mixin(template);
+  template.helpers({
+    value: function () {
+      formInstance = Forms.instance();
+    }
+    , error: function () {}
+  });
+  var dom = makeForm(template, function () {
+    return {
+      doc: {
+        iteration: 0
+      }
+    };
+  });
+
+  test.throws(function () {
+    formInstance.set({}, {});
+  });
+
+  test.throws(function () {
+    formInstance.set('field');
+  });
+
+  test.throws(function () {
+    formInstance.set(null);
+  });
+
+  test.throws(function () {
+    formInstance.set(undefined);
+  });
+
+  test.throws(function () {
+    formInstance.set('');
+  });
+});
+
+Tinytest.add('Forms - Forms.instance().errors - get and set reactively', function (test) {
+  var template = makeTemplate('simpleForm');
+  var form;
+  var didFire = 0;
+  var errors = [];
+  Forms.mixin(template);
+  template.helpers({
+    value: function () {
+      form = Forms.instance();
+      checkEntities(test, form.errors(), errors);
+      didFire++;
+    }
+    , error: function () {}
+  });
+  var dep = new Tracker.Dependency();
+  var dom = makeForm(template, {});
+  errors = [{message: 'x'}];
+  form.errors(errors);
+  // Tracker.flush() is necessary because dep.changed does not trigger an 
+  // immediate rerun of computations, this ensures that our helper above
+  // runs the second time synchronously
+  Tracker.flush();
+  test.equal(didFire, 2);
+});
+
+Tinytest.add('Forms - Forms.instance().errors - get and set property errors reactively', function (test) {
+  var template = makeTemplate('simpleForm');
+  var form;
+  var didFire = 0;
+  var errors = [];
+  Forms.mixin(template);
+  template.helpers({
+    value: function () {
+      form = Forms.instance();
+      checkEntities(test, form.errors('someName'), errors);
+      didFire++;
+    }
+    , error: function () {}
+  });
+  var dep = new Tracker.Dependency();
+  var dom = makeForm(template, {});
+  // This is our input
+  errors = [{message: 'x'}];
+  form.errors('someName', errors);
+  form.errors('otherName', errors);
+  // This is what we expect to get back
+  errors = [{message: 'x', name: 'someName'}];
+  // Tracker.flush() is necessary because dep.changed does not trigger an 
+  // immediate rerun of computations, this ensures that our helper above
+  // runs the second time synchronously
+  Tracker.flush();
+  test.equal(didFire, 2);
+});
+
+Tinytest.add('Forms - Forms.instance().errors - is accessible as a template helper', function (test) {
+  var template = makeTemplate('simpleForm');
+  var form;
+  var didFire = 0;
+  var errors = [];
+  Forms.mixin(template);
+  template.helpers({
+    value: function () {
+      form = Forms.instance();
+      var errorsHelper = Blaze.getView().lookup('errors');
+      checkEntities(test, errorsHelper.call(this), errors);
+      checkEntities(test, errorsHelper.call(this, 'test'), errors);
+      didFire++;
+    }
+    , error: function () {}
+  });
+  var dom = makeForm(template);
+  form.errors('test', {iterations: didFire});
+  errors = [{ name: 'test', iterations: didFire }];
+  Tracker.flush();
+  test.equal(didFire, 2);
+});
+
+Tinytest.add('Forms - Forms.instance().errors - throws on invalid arguments', function (test) {
+  var template = makeTemplate('simpleForm');
+  var formInstance;
+  Forms.mixin(template);
+  template.helpers({
+    value: function () {
+      formInstance = Forms.instance();
+    }
+    , error: function () {}
+  });
+  var dom = makeForm(template, function () {
+    return {
+      doc: {
+        iteration: 0
+      }
+    };
+  });
+
+  test.throws(function () {
+    formInstance.errors({}, {});
+  });
+
+  test.throws(function () {
+    formInstance.errors([], []);
+  });
+
+  test.throws(function () {
+    formInstance.errors('field', '');
+  });
+
+  test.throws(function () {
+    formInstance.errors('field', null);
+  });
+
+  test.throws(function () {
+    formInstance.errors('field', undefined);
+  });
+
+  test.throws(function () {
+    formInstance.errors(null);
+  });
+
+  test.throws(function () {
+    formInstance.errors(undefined);
+  });
+
+  test.throws(function () {
+    formInstance.errors('');
+  });
+});
+
+Tinytest.add('Forms - Forms.instance().error - gets first error reactively', function (test) {
+  var template = makeTemplate('simpleForm');
+  var form;
+  var didFire = 0;
+  var errors = [];
+  Forms.mixin(template);
+  template.helpers({
+    value: function () {
+      form = Forms.instance();
+      var results = form.error();
+      if (!errors.length)
+        test.isUndefined(results);
+      else
+        checkEntities(test, [results], errors);
+      didFire++;
+    }
+    , error: function () {}
+  });
+  var dep = new Tracker.Dependency();
+  var dom = makeForm(template, {});
+  // This is our input
+  errors = [{message: 'x'}];
+  form.errors('someName', errors.concat(errors));
+  // This is what we expect to get back
+  errors = [{message: 'x', name: 'someName'}];
+  // Tracker.flush() is necessary because dep.changed does not trigger an 
+  // immediate rerun of computations, this ensures that our helper above
+  // runs the second time synchronously
+  Tracker.flush();
+  test.equal(didFire, 2);
+});
+
+Tinytest.add('Forms - Forms.instance().error - gets first property error reactively', function (test) {
+  var template = makeTemplate('simpleForm');
+  var form;
+  var didFire = 0;
+  var errors = [];
+  Forms.mixin(template);
+  template.helpers({
+    value: function () {
+      form = Forms.instance();
+      var results = form.error('someName');
+      if (!errors.length)
+        test.isUndefined(results);
+      else
+        checkEntities(test, [results], errors);
+      didFire++;
+    }
+    , error: function () {}
+  });
+  var dep = new Tracker.Dependency();
+  var dom = makeForm(template, {});
+  // This is our input
+  errors = [{message: 'x'}];
+  form.errors('someName', errors);
+  form.errors('otherName', errors);
+  // This is what we expect to get back
+  errors = [{message: 'x', name: 'someName'}];
+  // Tracker.flush() is necessary because dep.changed does not trigger an 
+  // immediate rerun of computations, this ensures that our helper above
+  // runs the second time synchronously
+  Tracker.flush();
+  test.equal(didFire, 2);
+});
+
+Tinytest.add('Forms - Forms.instance().error - is accessible as a template helper', function (test) {
+  var template = makeTemplate('simpleForm');
+  var form;
+  var didFire = 0;
+  var errors = [];
+  Forms.mixin(template);
+  template.helpers({
+    value: function () {
+      form = Forms.instance();
+      var errorHelper = Blaze.getView().lookup('error');
+      var results = errorHelper('someName');
+      var otherResults = errorHelper();
+      if (!errors.length) {
+        test.isUndefined(results);
+        test.isUndefined(otherResults);
+      }
+      else {
+        checkEntities(test, [results], errors);
+        checkEntities(test, [otherResults], errors);
+      }
+      didFire++;
+    }
+  });
+  var dep = new Tracker.Dependency();
+  var dom = makeForm(template, {});
+  // This is our input
+  errors = [{message: 'x'}];
+  form.errors('someName', errors);
+  // This is what we expect to get back
+  errors = [{message: 'x', name: 'someName'}];
+  // Tracker.flush() is necessary because dep.changed does not trigger an 
+  // immediate rerun of computations, this ensures that our helper above
+  // runs the second time synchronously
+  Tracker.flush();
+  test.equal(didFire, 2);
+});
+
+Tinytest.add('Forms - Forms.instance().isValid - gets validity reactively', function (test) {
+  var template = makeTemplate('simpleForm');
+  var form;
+  var didFire = 0;
+  var isValid = true;
+  Forms.mixin(template);
+  template.helpers({
+    value: function () {
+      form = Forms.instance();
+      test.equal(form.isValid(), isValid);
+      didFire++;
+    }
+    , error: function () {}
+  });
+  var dep = new Tracker.Dependency();
+  var dom = makeForm(template, {});
+  isValid = false;
+  form.errors('someName', [{message: 'x'}]);
+  // Tracker.flush() is necessary because dep.changed does not trigger an 
+  // immediate rerun of computations, this ensures that our helper above
+  // runs the second time synchronously
+  Tracker.flush();
+  isValid = true;
+  form.errors('someName', []);
+  Tracker.flush();
+  test.equal(didFire, 3);
+});
+
+Tinytest.add('Forms - Forms.instance().isValid - gets property validity reactively', function (test) {
+  var template = makeTemplate('simpleForm');
+  var form;
+  var didFire = 0;
+  var isValid = true;
+  Forms.mixin(template);
+  template.helpers({
+    value: function () {
+      form = Forms.instance();
+      test.equal(form.isValid('someName'), isValid);
+      didFire++;
+    }
+    , error: function () {}
+  });
+  var dep = new Tracker.Dependency();
+  var dom = makeForm(template, {});
+  isValid = false;
+  form.errors('someName', [{message: 'x'}]);
+  form.errors('otherName', [{message: 'x'}]);
+  // Tracker.flush() is necessary because dep.changed does not trigger an 
+  // immediate rerun of computations, this ensures that our helper above
+  // runs the second time synchronously
+  Tracker.flush();
+  isValid = true;
+  form.errors('someName', []);
+  Tracker.flush();
+  test.equal(didFire, 3);
+});
+
+Tinytest.add('Forms - Forms.instance().isValid - is accessible as a template helper', function (test) {
+  var template = makeTemplate('simpleForm');
+  var form;
+  var didFire = 0;
+  var propertyIsValid = true;
+  var formIsValid = true;
+  Forms.mixin(template);
+  template.helpers({
+    value: function () {
+      form = Forms.instance();
+      var isValidHelper = Blaze.getView().lookup('isValid');
+      test.equal(isValidHelper(), formIsValid);
+      test.equal(isValidHelper('someName'), propertyIsValid);
+      didFire++;
+    }
+  });
+  var dep = new Tracker.Dependency();
+  var dom = makeForm(template, {});
+  formIsValid = false;
+  propertyIsValid = false;
+  form.errors('someName', [{message: 'x'}]);
+  form.errors('otherName', [{message: 'x'}]);
+  // Tracker.flush() is necessary because dep.changed does not trigger an 
+  // immediate rerun of computations, this ensures that our helper above
+  // runs the second time synchronously
+  Tracker.flush();
+  propertyIsValid = true;
+  form.errors('someName', []);
+  Tracker.flush();
+  test.equal(didFire, 3);
+});
+
+Tinytest.add('Forms - Forms.instance().isInvalid - gets validity reactively', function (test) {
+  var template = makeTemplate('simpleForm');
+  var form;
+  var didFire = 0;
+  var isValid = true;
+  Forms.mixin(template);
+  template.helpers({
+    value: function () {
+      form = Forms.instance();
+      test.equal(form.isInvalid(), !isValid);
+      didFire++;
+    }
+    , error: function () {}
+  });
+  var dep = new Tracker.Dependency();
+  var dom = makeForm(template, {});
+  isValid = false;
+  form.errors('someName', [{message: 'x'}]);
+  // Tracker.flush() is necessary because dep.changed does not trigger an 
+  // immediate rerun of computations, this ensures that our helper above
+  // runs the second time synchronously
+  Tracker.flush();
+  isValid = true;
+  form.errors('someName', []);
+  Tracker.flush();
+  test.equal(didFire, 3);
+});
+
+Tinytest.add('Forms - Forms.instance().isInvalid - gets property validity reactively', function (test) {
+  var template = makeTemplate('simpleForm');
+  var form;
+  var didFire = 0;
+  var isValid = true;
+  Forms.mixin(template);
+  template.helpers({
+    value: function () {
+      form = Forms.instance();
+      test.equal(form.isInvalid('someName'), !isValid);
+      didFire++;
+    }
+    , error: function () {}
+  });
+  var dep = new Tracker.Dependency();
+  var dom = makeForm(template, {});
+  isValid = false;
+  form.errors('someName', [{message: 'x'}]);
+  form.errors('otherName', [{message: 'x'}]);
+  // Tracker.flush() is necessary because dep.changed does not trigger an 
+  // immediate rerun of computations, this ensures that our helper above
+  // runs the second time synchronously
+  Tracker.flush();
+  isValid = true;
+  form.errors('someName', []);
+  Tracker.flush();
+  test.equal(didFire, 3);
+});
+
+Tinytest.add('Forms - Forms.instance().isInvalid - is accessible as a template helper', function (test) {
+  var template = makeTemplate('simpleForm');
+  var form;
+  var didFire = 0;
+  var propertyIsValid = true;
+  var formIsValid = true;
+  Forms.mixin(template);
+  template.helpers({
+    value: function () {
+      form = Forms.instance();
+      var isInvalidHelper = Blaze.getView().lookup('isInvalid');
+      test.equal(isInvalidHelper(), !formIsValid);
+      test.equal(isInvalidHelper('someName'), !propertyIsValid);
+      didFire++;
+    }
+  });
+  var dep = new Tracker.Dependency();
+  var dom = makeForm(template, {});
+  formIsValid = false;
+  propertyIsValid = false;
+  form.errors('someName', [{message: 'x'}]);
+  form.errors('otherName', [{message: 'x'}]);
+  // Tracker.flush() is necessary because dep.changed does not trigger an 
+  // immediate rerun of computations, this ensures that our helper above
+  // runs the second time synchronously
+  Tracker.flush();
+  propertyIsValid = true;
+  form.errors('someName', []);
+  Tracker.flush();
+  test.equal(didFire, 3);
+});
+
+
