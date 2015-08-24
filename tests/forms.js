@@ -127,6 +127,39 @@ Tinytest.add('Forms - Forms.instance() - returns null when called outside of tem
   test.isNull(Forms.instance());
 });
 
+Tinytest.add('Forms - Forms.instance().original - returns a reactive clone of this.doc', function (test) {
+  var template = makeTemplate('simpleForm');
+  var didFire = 0;
+  Forms.mixin(template);
+  template.helpers({
+    value: function () {
+      var form = Forms.instance();
+      var original = form.original();
+      test.equal(original, {
+        iteration: didFire
+      });
+
+      didFire++;
+    }
+    , error: function () {}
+  });
+  var dep = new Tracker.Dependency();
+  var dom = makeForm(template, function () {
+    dep.depend();
+    return {
+      doc: {
+        iteration: didFire
+      }
+    };
+  });
+  dep.changed();
+  // Tracker.flush() is necessary because dep.changed does not trigger an 
+  // immediate rerun of computations, this ensures that our helper above
+  // runs the second time synchronously
+  Tracker.flush();
+  test.equal(didFire, 2);
+});
+
 Tinytest.add('Forms - Forms.instance().doc - returns a reactive clone of this.doc', function (test) {
   var template = makeTemplate('simpleForm');
   var didFire = 0;
