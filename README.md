@@ -12,44 +12,39 @@ There are two things that Forms does well:
 Table of Contents
 ---------------
 - [Getting started](#getting-started)
-- [Inserting a new document](##inserting-a-new-document)
-- [Editing an existing document](##Editing-an-existing-document)
-- [Adding validation](##Adding-validation)
-- [Handling validation errors](##Handling-validation-errors)
-- [Advanced](##Advanced)
+- [Inserting a new document](#inserting-a-new-document)
+- [Editing an existing document](#editing-an-existing-document)
+- [Adding validation](#adding-validation)
+- [Handling validation errors](#handling-validation-errors)
+- [Advanced](#advanced)
 - [Contributing](#contributing)
 
 
 ##Getting started
----------------
 (adding the package)
 (adding the mixin - link to api docs for more)
 (creating a basic form)
 TBA
 
 ##Inserting a new document
----------------
 (how does Forms capture field data from the template)
 (example submit/insert event handler - tmpl.form.doc vs event doc)
 (tip: manipulation of document data before submit)
 TBA
 
 ##Editing an existing document
----------------
 (Using Forms helpers to populate form fields)
 (example submit/update event handler)
 (tip: displaying a different button depending on whether it is an insert or edit form)
 TBA
 
 ##Adding validation
----------------
 (Setting up a schema)
 (adding custom validators)
 (using the built-in validators)
 TBA
 
 ##Handling validation errors
----------------
 (capturing the documentInvalid event)
 (using form helper to display errors inline)
 (using form helper to display a list of all errors)
@@ -57,15 +52,13 @@ TBA
 TBA
 
 ##Advanced
----------------
 (adding onCreated and onMixin hooks)
 (overriding events - triggering the doc update/validation process flow manually )
 (overriding helpers - manipulating the internal doc directly)
 (triggering custom errors)
 (creating interconnected input fields e.g. range slider using propertyChange)
 
-#Contributing
----------------
+##Contributing
 TBA
 
 
