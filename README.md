@@ -1,5 +1,73 @@
-Easy to use reactive forms with validation
+Forms
 ===============
+Easy to use fully reactive forms. It was built ground-up aiming to eliminate the boilerplate of building forms in our applications (without creating more boilerplate).
+
+This is the offspring of our vision for a forms package which is fully reactive and fully agnostic and independent of how information is presented (including how validation errors are displayed and the use of CSS).
+
+There are two things that Forms does well:
+
+* seamless and fully reactive interface for capturing and retrieving form data and form related events  
+* flexible and easy to configure data validation
+
+Table of Contents
+---------------
+- [Getting started](#getting-started)
+- [Inserting a new document](##inserting-a-new-document)
+- [Editing an existing document](##Editing-an-existing-document)
+- [Adding validation](##Adding-validation)
+- [Handling validation errors](##Handling-validation-errors)
+- [Advanced](##Advanced)
+- [Contributing](#contributing)
+
+
+##Getting started
+---------------
+(adding the package)
+(adding the mixin - link to api docs for more)
+(creating a basic form)
+TBA
+
+##Inserting a new document
+---------------
+(how does Forms capture field data from the template)
+(example submit/insert event handler - tmpl.form.doc vs event doc)
+(tip: manipulation of document data before submit)
+TBA
+
+##Editing an existing document
+---------------
+(Using Forms helpers to populate form fields)
+(example submit/update event handler)
+(tip: displaying a different button depending on whether it is an insert or edit form)
+TBA
+
+##Adding validation
+---------------
+(Setting up a schema)
+(adding custom validators)
+(using the built-in validators)
+TBA
+
+##Handling validation errors
+---------------
+(capturing the documentInvalid event)
+(using form helper to display errors inline)
+(using form helper to display a list of all errors)
+(tip: adding a custom `invalid` css class on error)
+TBA
+
+##Advanced
+---------------
+(adding onCreated and onMixin hooks)
+(overriding events - triggering the doc update/validation process flow manually )
+(overriding helpers - manipulating the internal doc directly)
+(triggering custom errors)
+(creating interconnected input fields e.g. range slider using propertyChange)
+
+#Contributing
+---------------
+TBA
+
 
 Global Api
 ---------------
@@ -75,7 +143,7 @@ all forms helpers should use lazy initialization to create undocumented properti
 
 ```
 var doc = function (fieldName, fieldValue) {
-  
+
   // ...
 
   if (!this._doc)
@@ -91,7 +159,7 @@ all form helpers created via the `helpers` method should be stored in an undocum
 2. Each helper should be wrapped when attaching to the Template, like so:
 
 ```
-  // this is the effect we want, but you'll have to use a loop to attach all form helpers to the 
+  // this is the effect we want, but you'll have to use a loop to attach all form helpers to the
   // form instance
   template.form._helpers = {};
   template.form._helpers.doc = _.bind(Forms._helpers.doc, template.form);
