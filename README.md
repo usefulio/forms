@@ -1,8 +1,11 @@
 Forms
 ===============
+**TLDR; Go to [Getting started](#getting-started) to start having fun with Forms now.**
+
+##What is Forms?
 Easy to use fully reactive forms. It was built ground-up aiming to eliminate the boilerplate of building forms in our applications (without creating more boilerplate).
 
-Forms package is fully reactive, fully agnostic and independent of how information is presented, including how validation errors are displayed and transparent to any use of CSS.
+Forms package is fully reactive, fully agnostic of and independent from how information is presented, including how validation errors are displayed and transparent to any use of CSS.
 
 There are two things that Forms package does well:
 
@@ -12,6 +15,7 @@ There are two things that Forms package does well:
 Table of Contents
 ---------------
 - [Getting started](#getting-started)
+- [Accesing and manipulating Form fields data](#accesing-and-manipulating-form-fields-data)
 - [Inserting a new document](#inserting-a-new-document)
 - [Editing an existing document](#editing-an-existing-document)
 - [Adding validation](#adding-validation)
@@ -21,14 +25,123 @@ Table of Contents
 - [Global API](#global-api)
 
 ##Getting started
-- (adding the package)
-- (adding the mixin - link to api docs for more)
-- (creating a basic form)
-TBA
 
-##Inserting a new document
-- (how does Forms capture field data from the template)
-- (example submit/insert event handler - tmpl.form.doc vs event doc)
+**Step 1:** Add Forms package to you app:
+
+```meteor add useful:forms```
+
+**Step 2:** Create your form template. Note that there is no need to add any special css or template inclusions. Forms simply detects html `<form>` tags.  
+
+```html
+<template name="FormsDemoApp">
+  <form>
+    <label for="name">Name</label>
+    <input type="text" name="name">
+
+    <label for="telephone">Telephone</label>
+    <input type="text" name="telephone">
+
+    <button type="submit">Submit form</button>
+  </form>
+</template>
+```
+
+**Step 3:** Add Forms functionality to your template using the `mixin` method in your client code.
+```js
+if(Meteor.isClient){
+  Forms.mixin(Template.FormsDemoApp);  
+}
+```  
+
+That's it! You can now enjoy all the amazing features, advanced flexibility and outstanding simplicity of the [Forms API](#global-api).  
+
+Most of the interaction with the Forms API takes place via three interfaces:
+- The `form` object which is attached to the template instance when `Forms.mixin` is executed. (see [Instance state](#instance-state) and [Instance API](#instance-api) for details)
+- A set of events triggered by Forms to give the developer maximum flexiblity on how to handle different validation scenarios. (see [Forms Events](#forms-events) for details)
+- A set of built-in Forms reactive helpers which give access to the form fields values and any generated validation errors.
+
+##Accesing and manipulating Form fields data
+Forms maintains a reactive document internally in order to store the current values of the form fields. The `name` attribute of an input element is used in order to determine the name of each document field. For example:
+
+```html
+<template name="FormsDemoApp">
+  <form>
+    <label for="name">Name</label>
+    <input type="text" name="name">
+
+    <label for="telephone">Telephone</label>
+    <input type="text" name="telephone">
+  </form>
+</template>
+```
+
+will result in a document object similar to:
+```js
+{
+  name: '...',
+  telephone: '...'
+}
+```
+
+Forms monitor the template form fields for changes which are automatically captured in the internal reactive document (by monitoring `change` events). The document can be accessed in one of the following ways:
+- through the javascript API (reactive)
+- through the built-in template helpers (reactive)
+- passed as an argument with the 'documentSubmit' event (not reactive)
+
+Example: retrieving `name` field value using javascript API:
+```js
+Template.FormsDemoApp.helpers({
+  'nameIsBob': function () {
+    var tmpl = Template.instance()
+    return tmpl.form.doc('name') === 'bob';
+  }
+});
+```
+
+Example: getting 'name' field value through helpers. The text of the <p> section will be updated reactively every time the value of `name` input changes.
+```html
+<template name="FormsDemoApp">
+  <form>
+    <label for="name">Name</label>
+    <input type="text" name="name" >
+
+    <label for="telephone">Telephone</label>
+    <input type="text" name="telephone">
+    <button type="submit">Submit form</button>
+    <p>The name is: {{doc 'name'}}</p>
+  </form>
+</template>
+
+##Inserting a new document _(without validation)_
+When a 'submit' event is triggered, Forms automatically prevents the default submit handler, executes any validation specified in the schema (see [Adding validation](#adding-validation) for more), and triggers one of two javascript events:
+- `documentSubmit` [Form package event](#forms-events) if validation was successful
+- `documentInvalid` [Form package event](#forms-events) if validation was unsuccessful
+
+Here follows is a simple insert scenario without validation:
+```html
+<template name="FormsDemoApp">
+  <form>
+    <label for="name">Name</label>
+    <input type="text" name="name">
+
+    <label for="telephone">Telephone</label>
+    <input type="text" name="telephone">
+  </form>
+</template>
+```
+
+```js
+var Contacts = new Mongo.Collection('contacts');
+
+Template.FormsDemoApp.events({
+  'documentSubmit': function (event, tmpl, doc) {
+    // Note that documentSubmit will also pass the validated document
+    // as a parameter. This instance of the document object is NOT reactive.
+    Contacts.insert(doc);
+  };
+});
+```
+
 - (tip: manipulation of document data before submit)
 TBA
 
@@ -110,7 +223,7 @@ Each template instance which has been extended by the Forms library should provi
 
 Each of the above methods should check `isDefaultPrevented` and `preventDefault` if `originalEvent` is passed.
 
-Forms Events
+##Forms Events
 --------------
 
 * `$(field).trigger('propertyChange', [changes])` - on input change, the forms package should trigger this event, changes is an object who's key-value pairs represent the properties which have changed. In theory changes should have only one key-value pair, however app developers should have the option to add as many key-value pairs as they like, if for example they want to store a date on three seperate properties, but are using a single input element for user input, then one `change` event would trigger a single `propertyChange` event with three key-value pairs, rather than triggering three events.
