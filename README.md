@@ -2,7 +2,7 @@ Forms
 ===============
 **TLDR; Go to [Getting started](#getting-started) to start having fun with Forms now.**
 
-##What is Forms?
+## What is Forms?
 Easy to use fully reactive forms. It was built ground-up aiming to eliminate the boilerplate of building forms in our applications (without creating more boilerplate).
 
 Forms package is fully reactive, fully agnostic of and independent from how information is presented, including how validation errors are displayed and transparent to any use of CSS.
@@ -20,11 +20,11 @@ Table of Contents
 - [Editing an existing document](#editing-an-existing-document)
 - [Adding validation](#adding-validation)
 - [Handling validation errors](#handling-validation-errors)
-- [Advanced](#advanced)
+- [Advanced topics](#advanced topics)
 - [Contributing](#contributing)
 - [Global API](#global-api)
 
-##Getting started
+## Getting started
 
 **Step 1:** Add Forms package to you app:
 
@@ -86,7 +86,7 @@ will result in a document object similar to:
 Forms monitor the template form fields for changes which are automatically captured in the internal reactive document (by monitoring `change` events). The document can be accessed in one of the following ways:
 - through the javascript API (reactive)
 - through the built-in template helpers (reactive)
-- passed as an argument with the 'documentSubmit' event (not reactive)
+- passed as an argument with the 'documentSubmit' event (non-reactive)
 
 Example: retrieving `name` field value using javascript API:
 ```js
@@ -111,8 +111,9 @@ Example: getting 'name' field value through helpers. The text of the <p> section
     <p>The name is: {{doc 'name'}}</p>
   </form>
 </template>
+```
 
-##Inserting a new document _(without validation)_
+## Inserting a new document _(without validation)_
 When a 'submit' event is triggered, Forms automatically prevents the default submit handler, executes any validation specified in the schema (see [Adding validation](#adding-validation) for more), and triggers one of two javascript events:
 - `documentSubmit` [Form package event](#forms-events) if validation was successful
 - `documentInvalid` [Form package event](#forms-events) if validation was unsuccessful
@@ -142,40 +143,152 @@ Template.FormsDemoApp.events({
 });
 ```
 
-- (tip: manipulation of document data before submit)
+### Manipulation of document data before submit
+There are circumstances where the input element value does not match the value that you would like to store in the document e.g. converting a date picker value to number-of-days or performing a unit conversion. You can modify document values before submition either by monitoring for the `propertyChange` event or by creating a custom `submit` handler. Creating a custom `submit` handler is covered in [Advanced topics](#advanced topics). Here follows an example of modifying a document value by capturing `propertyChange`. You can use `tmpl.form.doc([field-name])` method to both read and write any document value (if you pass a field name as a parameter) or the entire document (see [Instance API](#instance-api)).
+
+```js
+// In the following example we want to ensure that 'name' is always stored in our document capitalized.
+Template.FormsDemoApp.events({
+  // Note how propertyChange event passes all changes as a parameter.
+  // The parameter contains a set of key-value pairs.
+  'propertyChange': function (e, tmpl, changes) {
+    if (changes.name)
+      tmpl.doc.('name', changes.name.toUpperCase());
+  }
+});
+```
+
+## Editing an existing document
+Forms gives access to the document fields through the `doc [field-name]` template helper. This is especially useful when you want to create an edit-type form. Consider the following example:
+
+```html
+<template name="FormsDemoApp">
+  <form>
+    <label for="name">Name</label>
+    <input type="text" name="name" value={{doc name}}>
+
+    <label for="telephone">Telephone</label>
+    <input type="text" name="telephone" value={{doc telephone}}>
+  </form>
+</template>
+```
+
+You can therefore easily create an edit-type form by setting the Forms document when the template is being rendered. e.g.:
+
+```js
+Template.FormsDemoApp.onRendered(function () {
+  var tmpl = this;
+  // for this example we assume that the data context of the template contains the document to be edited.
+  tmpl.form.doc(tmpl.data);
+});
+```
+
+## Adding validation
+Adding validation is as simple as defining a schema for the form document. A schema can be defined using `tmpl.form.schema` method using the following syntax:
+```js
+  var tmpl = Template.instance();
+
+  tmpl.form.schema({
+    'field-name': function (value, property) {
+      // the first parameter holds the current value of the field
+      // the second parameter holds the field/property name
+      // the function should return `true` if valid or an error message
+      // if invalid.
+      var isValid = false;
+      var errorMessage = "field is invalid";
+      if (_someValidationCheckIsTrue_) {
+        isValid = true
+      }
+
+      return isValid || errorMessage;
+    }
+    ...
+  });
+```
+
+A good practice is to place the schema definition inside the form template onCreated hook in order to ensure that Forms instance has been initialized.
+
+We will use the following template as a reference for the two validation examples that follow.
+```html
+<template name="FormsDemoApp">
+  <form>
+    <label for="name">Name</label>
+    <input type="text" name="name">
+
+    <label for="telephone">Telephone</label>
+    <input type="text" name="telephone">
+
+    <label for="nights">How many nights will you be staying?</label>
+    <input type="number" name="nights">
+  </form>
+</template>
+```
+### Adding custom validators
+```js
+Forms.mixin(Template.FormsDemoApp);
+
+Template.FormsDemoApp.onCreated(function() {
+    // Forms.instance() is an alias to Template.instance().forms
+    Forms.instance().schema({
+      'name': function (value, property) {
+        // check that name is a non-empty string
+        var isValid = false;
+        var errorMessage = "Name cannot be empty";
+
+        if (_.isString(value) && value.length)
+          isValid = true;
+
+        return isValid || errorMessage;
+      },
+      'telephone': function (value, property) {
+        // checks that telephone is a 10 digit number
+        var isValid = false;
+        var phoneno = /^\d{10}$/;  
+        var errorMessage = "Telephone must be a 10-digit number";
+
+        if (value.match(phoneno))
+          isValid = true;
+
+        return isValid || errorMessage;
+      },
+      'nights': function (value, property) {
+        // checks that nights is greater than zero
+        var isValid = false;
+        var errorMessage = "Number of nights should be greater than 1";
+
+        if ((value % 1 === 0) && (value > 0))
+          isValid = true;
+
+        return isValid || errorMessage;
+      }
+    });
+});
+```
+
+### Using built-in validators
+Forms comes with a set of built-in validators and preset regex to speed-up schema definitions.
 TBA
 
-##Editing an existing document
-- (Using Forms helpers to populate form fields)
-- (example submit/update event handler)
-- (tip: displaying a different button depending on whether it is an insert or edit form)
-TBA
-
-##Adding validation
-- (Setting up a schema)
-- (adding custom validators)
-- (using the built-in validators)
-TBA
-
-##Handling validation errors
+## Handling validation errors
 - (capturing the documentInvalid event)
 - (using form helper to display errors inline)
 - (using form helper to display a list of all errors)
 - (tip: adding a custom `invalid` css class on error)
 TBA
 
-##Advanced
+## Advanced
 - (adding onCreated and onMixin hooks)
 - (overriding events - triggering the doc update/validation process flow manually )
 - (overriding helpers - manipulating the internal doc directly)
 - (triggering custom errors)
-- (creating interconnected input fields e.g. range slider using propertyChange)
+- (creating interconnected input fields using propertyChange e.g. range slider)
+TBA
 
-##Contributing
+## Contributing
 TBA
 
 
-#Global Api
+# Global Api
 ---------------
 
 * `Forms.mixin(template, options)` - options is an object, at a minimum the app developer should be able to turn template helpers and events on and off, other options that make sense should also be configurable via this object.
@@ -223,7 +336,7 @@ Each template instance which has been extended by the Forms library should provi
 
 Each of the above methods should check `isDefaultPrevented` and `preventDefault` if `originalEvent` is passed.
 
-##Forms Events
+## Forms Events
 --------------
 
 * `$(field).trigger('propertyChange', [changes])` - on input change, the forms package should trigger this event, changes is an object who's key-value pairs represent the properties which have changed. In theory changes should have only one key-value pair, however app developers should have the option to add as many key-value pairs as they like, if for example they want to store a date on three seperate properties, but are using a single input element for user input, then one `change` event would trigger a single `propertyChange` event with three key-value pairs, rather than triggering three events.
