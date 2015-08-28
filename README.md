@@ -114,7 +114,7 @@ Example: getting 'name' field value through helpers. The text of the <p> section
 ```
 
 ## Inserting a new document _(without validation)_
-When a 'submit' event is triggered, Forms automatically prevents the default submit handler, executes any validation specified in the schema (see [Adding validation](#adding-validation) for more), and triggers one of two javascript events:
+When a 'submit' event is triggered, Forms automatically prevents the default submit handler, executes any validation specified in the schema (see [Adding validation](#adding-validation) for more details), and triggers one of two javascript events:
 - `documentSubmit` [Form package event](#forms-events) if validation was successful
 - `documentInvalid` [Form package event](#forms-events) if validation was unsuccessful
 
@@ -389,11 +389,62 @@ Forms.instance().schema({
   ```
 
 ## Handling validation errors
-- (capturing the documentInvalid event)
-- (using form helper to display errors inline)
-- (using form helper to display a list of all errors)
-- (tip: adding a custom `invalid` css class on error)
-TBA
+Forms will automatically validate the data contained in a form against a defined schema when a `submit` event is detected. Depending on the outcome of the validation tests one of two javascript events will be triggered:
+- `documentSubmit` [Form package event](#forms-events) if validation was successful
+- `documentInvalid` [Form package event](#forms-events) if validation was unsuccessful
+
+Here is an example of how capture a `documentInvalid` event. See [Inserting a new document](#inserting-a-new-document) section for how to handle `documentSubmit`.
+
+```js
+Template.FormsDemoApp.events({
+  'documentInvalid': function (event, tmpl, doc, errors) {
+    // Note that documentInvalid will also pass the (in)validated document (non-reactive)
+    // and a collection of the detected errors (non-reactive) as parameters.  
+
+    // `errors` is an array of `error` objects.
+    // `error` object has two properties:
+    // `error.name`: the invalid field name
+    // `error.message`: the error message returned from the schema validator
+    _.each(errors, function (error) {
+      console.log("The value of field: "+error.name+" is invalid, see the following error message for details: "+error.message);
+    });
+  };
+});
+```
+
+## Displaying errors
+Forms provides template helpers for displaying validating errors.
+- helper `error` takes a field name as a single parameter and returns the respective error object reactively if the field does not pass the validation test. Usage example:
+```html
+<template name="FormsDemoApp">
+  <form>
+    <label for="name">Name</label>
+    <input type="text" name="name" value={{doc name}}>
+    <div class="error">{{#with error "name"}}{{message}}{{/with}}</div>
+
+    <label for="telephone">Telephone</label>
+    <input type="text" name="telephone" value={{doc telephone}}>
+    <div class="error">{{#with error "telephone"}}{{message}}{{/with}}</div>
+  </form>
+</template>
+```
+
+- helper `errors` returns a reactive list of all validation errors. Usage example:
+```html
+<template name="FormsDemoApp">
+  <form>  
+    {{#each errors}}
+      <p>{{./message}}</p>
+    {{/each}}
+
+    <label for="name">Name</label>
+    <input type="text" name="name" value={{doc name}}>
+
+    <label for="telephone">Telephone</label>
+    <input type="text" name="telephone" value={{doc telephone}}>
+  </form>
+</template>
+```
 
 ## Advanced
 - (adding onCreated and onMixin hooks)
