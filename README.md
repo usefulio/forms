@@ -266,8 +266,120 @@ Template.FormsDemoApp.onCreated(function() {
 ```
 
 ### Using built-in validators
-Forms comes with a set of built-in validators and preset regex to speed-up schema definitions.
-TBA
+Forms comes with a set of built-in validators and regex to speed-up schema definitions. Validators are accessed through the `Forms.validators` object and take a single object `context` as a parameter. `context` must have two parameters `value` and `options` the content of which depends on the context of the specific validator. See below for more details on how the two parameters are used in each case.
+
+- `oneOf` Returns `true` if the value in `value` is present in the list in `options`. (Alias for underscore.js `_.contains`).
+usage example:
+```js
+var carTypes = {'sport', 'sedan', 'hatchback', 'suv', 'truck', 'cabrio'};
+
+Forms.instance().schema({
+  'carType': function (value, property) {
+    // checks that nights is greater than zero
+    var isValid = false;
+    var errorMessage = "The car type you entered is not recognized";
+    var context = {
+      options: carTypes,
+      value: value
+    };
+
+    isValid = Forms.validators.oneOf(context);
+    return isValid || errorMessage;
+});
+```
+- `min` Returns `true` if the value in `value` is a number and greater or equal to the value in `options`.
+- `max` Returns `true` if the value in `value` is a number and smaller or equal to the value in `options`.
+usage example:
+```js
+Forms.instance().schema({
+  'nights': function (value, property) {
+    var isValid = false;
+    var errorMessage = "Number of nights must be at least 1";
+    var context = {
+      options: 1, // that's the minimum value
+      value: value
+    };
+
+    isValid = Forms.validators.min(context);
+    return isValid || errorMessage;
+});
+```
+- `type` Returns `true` if the value in `value` is of the type specified in `options`. The following types are supported: `String`, `Number`, `Date`, `Object`, `Array
+usage example:
+```js
+Forms.instance().schema({
+  'startDate': function (value, property) {
+    var isValid = false;
+    var errorMessage = "startDate is not a valid Date object";
+    var context = {
+      options: "Date",
+      value: value
+    };
+
+    isValid = Forms.validators.type(context);
+    return isValid || errorMessage;
+});
+```
+- `minLength` Returns `true` if value in `value` is a String with length greater or equal to the value in `options`.
+- `maxLength` Returns `true` if value in `value` is a String with length less or equal to the value in `options`.
+usage example:
+```js
+Forms.instance().schema({
+  'nickname': function (value, property) {
+    var isValid = false;
+    var errorMessage = "nickname must be at least 6 characters long";
+    var context = {
+      options: 6,
+      value: value
+    };
+
+    isValid = Forms.validators.minLength(context);
+    return isValid || errorMessage;
+});
+```
+- `minCount` Returns `true` if value in `value` is an Array with length greater or equal to the value in `options`.
+- `maxCount` Returns `true` if value in `value` is an Array with length less or equal to the value in `options`.
+usage example:
+```js
+Forms.instance().schema({
+  'lotteryNumbers': function (value, property) {
+    var isValid = false;
+    var errorMessage = "You must pick at least 6 lottery numbers";
+    var context = {
+      options: 6,
+      value: value
+    };
+
+    isValid = Forms.validators.minCount(context);
+    return isValid || errorMessage;
+});
+```
+- `regex` Returns `true` if value in `value` matches the regex in `options`. Regex in `options` can be a regex object or an object like { pattern: "asdf", flags: "i" } or an array of either. The following built-in regular expressions are provided through the `Forms.regexp` object (see regexps.js for more details):
+  - Forms.regexp.EMAIL
+  - Forms.regexp.DOMAIN
+  - Forms.regexp.WEAK_DOMAIN
+  - Forms.regexp.IP
+  - Forms.regexp.IPV4
+  - Forms.regexp.IPV6
+  - Forms.regexp.URL
+  - Forms.regexp.ID
+  - Forms.regexp.ZIP_CODE
+
+usage example:
+```js
+Forms.instance().schema({
+  'email': function (value, property) {
+    var isValid = false;
+    var errorMessage = "invalid email address format";
+    var context = {
+      options: Forms.regexp.EMAIL,
+      value: value
+    };
+
+    isValid = Forms.validators.regex(context);
+    return isValid || errorMessage;
+});
+```
 
 ## Handling validation errors
 - (capturing the documentInvalid event)
