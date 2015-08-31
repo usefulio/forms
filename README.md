@@ -59,7 +59,9 @@ That's it! You can now enjoy all the amazing features, advanced flexibility and 
 Most of the interaction with the `Forms` API takes place via three interfaces:
 
 - **The `form` object** which is attached to the template instance when `Forms.mixin` is executed. (see [Accessing Form fields data](#accessing-form-fields-data), [Manipulation of document data before submit](#manipulation-of-document-data-before-submit) and [Editing an existing document](#editing-an-existing-document) for snippets using the `form` object and [Instance state](#instance-state) and [Instance API](#instance-api) for API details)
-> **NOTE: throughout this document `tmpl` keyword refers to the template instance object, even if not explicitly stated.** 
+> **NOTE 1:** The `Forms.instance()` method is equivalent to `Template.instance().form` but also includes a `null` test in case the template instance or the form object are not yet initialized.
+**NOTE 2:** throughout this document `tmpl` keyword refers to the template instance object, even if not explicitly stated.
+
 
 - A set of **events triggered by `Forms`** to give the developer maximum flexiblity on how to handle different validation scenarios. (see [Inserting a new document](#inserting-a-new-document-without-validation) and [Handling validation errors](#handling-validation-errors) for examples and [Forms Events](#forms-events) for details)
 - A set of **built-in `Forms` reactive helpers** which give access to the form fields values and any generated validation errors (see [Accessing Form fields data](#accessing-form-fields-data), [Editing an existing document](#editing-an-existing-document) and [Handling validation errors](#handling-validation-errors) for examples)
@@ -76,6 +78,8 @@ Most of the interaction with the `Forms` API takes place via three interfaces:
 
     <label for="telephone">Telephone</label>
     <input type="text" name="telephone">
+
+    <button type="submit">Submit form</button>
   </form>
 </template>
 ```
@@ -98,8 +102,8 @@ will result in a document object similar to:
 ```js
 Template.FormsDemoApp.helpers({
   'nameIsBob': function () {
-    var tmpl = Template.instance()
-    return tmpl.form.doc('name') === 'bob';
+    var form = Forms.instance()
+    return form.doc('name') === 'bob';
   }
 });
 ```
@@ -115,7 +119,7 @@ The text of the `<p>` section will be updated reactively every time the value of
     <label for="telephone">Telephone</label>
     <input type="text" name="telephone">
     <button type="submit">Submit form</button>
-    <p>The name is: {{doc 'name'}}</p>
+    <p>The name is: {{doc 'fullName'}}</p>
   </form>
 </template>
 ```
@@ -154,7 +158,7 @@ Template.FormsDemoApp.events({
 ### Manipulation of document data before submit
 There are circumstances where the input element value does not match the value that you would like to store in the document e.g. converting a date picker value to number-of-days or performing a unit conversion. You can modify document values before submission either by monitoring for the `propertyChange` event or by creating a custom `submit` handler. Creating a custom `submit` handler is not covered in this document. 
 
-Here follows an example of modifying a document value by capturing `propertyChange`. You can use `tmpl.form.doc([field name], [value])` method to both read and write any document value (if you pass a field name as a parameter) or the entire document (see [Instance API](#instance-api) for details).
+Here follows an example of modifying a document value by capturing `propertyChange`. You can use `Forms.instance().doc([field name], [value])` method to both read and write any document value (if you pass a field name as a parameter) or the entire document (see [Instance API](#instance-api) for details).
 
 ```js
 // In the following example we want to ensure that 'name' is always stored in our document capitalized.
@@ -163,7 +167,8 @@ Template.FormsDemoApp.events({
   // The parameter contains a set of key-value pairs.
   'propertyChange': function (e, tmpl, changes) {
     if (changes.name)
-      tmpl.form.doc('name', changes.name.toUpperCase());
+      Forms.instance().doc('name', changes.name.toUpperCase());
+    // the method call above is equivalent to Forms.instance().doc, we use the shorter version here for brevity.  
   }
 });
 ```
@@ -187,18 +192,43 @@ You can therefore easily create an edit-type form by using `Forms` template help
 
 ```js
 Template.FormsDemoApp.onRendered(function () {
-  var tmpl = this;
+  var form = Forms.instance();
   // for this example we assume that the data context of the template instance contains the document to be edited.
-  tmpl.form.doc(tmpl.data);
+  form.doc(tmpl.data);
 });
 ```
 
-## Adding validation
-Adding validation is as simple as defining a schema for the form document. A schema can be defined using `tmpl.form.schema` method and the following syntax:
-```js
-  var tmpl = Template.instance();
+or if you expect the data context to change dynamically and want to update the form document reactively:
 
-  tmpl.form.schema({
+```js
+Template.FormsDemoApp.onRendered(function () {
+  var tmpl = this;
+  // for this example we assume that the data context of the template instance contains the document to be edited.
+  tmpl.autorun(function () {
+    var data = Template.currentData();
+    Forms.instance().doc(tmpl.data);
+  });
+});
+```  
+
+> Note that the internal `Forms` document is also attached to the current template data context (e.g. Template.instance().data.doc) and it is also monitored reactively for updates. e.g. you can also reactively update the value of a field in a template helper as follows: 
+```js 
+'myhelper': function () {
+  var doc = Template.instance().data.doc;
+  doc.myField = 'a new value'; // this will also update the internal reactive document.
+
+  // ... do something more meaningful here 
+  // ... and return something meaningful
+  return true;
+}
+```
+
+## Adding validation
+Adding validation is as simple as defining a schema for the form document. A schema can be defined using `Forms.instance().schema` method and the following syntax:
+```js
+  var form = Forms.instance();
+
+  form.schema({
     'field-name': function (value, property) {
       // the first parameter holds the current value of the field
       // the second parameter holds the field/property name
@@ -216,7 +246,15 @@ Adding validation is as simple as defining a schema for the form document. A sch
   });
 ```
 
-It is good practice to place the schema definition inside the form template `onCreated` hook in order to ensure that `Forms` instance has been initialized.
+There are several options for passing the schema definition to the current `Forms` instance such as: 
+
+- using the `Forms.instance().schema` method 
+- using the `tmpl.form.schema` method
+- during initialization as an `option` property passed to `Forms.mixin` method (see [Overriding Forms events and template helpers](#overriding-forms-events-and-template-helpers))
+- Reactively by setting the `schema` property of the current template instance data context (Template.instance().data.schema = {...}). 
+
+
+Below is an example of adding a schema inside the form template `onCreated` hook in order to ensure that `Forms` instance has been initialized.
 
 We will use the following template as a reference for the two validation examples that follow.
 ```html
@@ -510,26 +548,28 @@ Template.FormsDemoAppHome.helpers({
 // is automatically adjusted accordingly. 
 Template.FormsDemoAppHome.events({
   'propertyChange [name=endDate]': function (e, tmpl, changes) {
+      var form = Forms.instance();
       var endDate = moment(changes.endDate);
-      var startDate = tmpl.form.get('startDate');
+      var startDate = form.get('startDate');
       var diff = endDate.diff(startDate,'days');
 
       if (diff < 2) {
         startDate = endDate.clone();
         startDate.subtract(2, 'days');
       }
-      tmpl.form.set('startDate', startDate);
+      form.set('startDate', startDate);
   },  
   'propertyChange [name=startDate]': function (e, tmpl, changes) {
+      var form = Forms.instance();
       var startDate = moment(changes.startDate);
-      var endDate = tmpl.form.get('endDate');
+      var endDate = form.get('endDate');
       var diff = endDate.diff(startDate,'days');
 
       if (diff < 2) {
         endDate = startDate.clone();
         endDate.add(2, 'days');
       }
-      tmpl.form.set('endDate', endDate);
+      form.set('endDate', endDate);
   }
 });
 
@@ -543,14 +583,15 @@ There are circumstances where a validation error may need to be triggered outsid
 Template.FormsDemoAppHome.events({
   // Using propertyChange event handler means that this will execute, and therefore the errors template helpers will get updated reactively, whenever the field value changes. 
   'propertyChange [name=endDate]': function (event, tmpl, changes) {
+      var form = Forms.instance();
       var endDate = moment(changes.endDate);
-      var startDate = moment(tmpl.form.doc('startDate'));
+      var startDate = moment(form.doc('startDate'));
       var diff = endDate.diff(startDate);
 
       if (diff < 0) {
         // the second parameter of invalidate is an error object (or array of error objects)
         // An error object gets two parameters an error `name` and an error `message` 
-        tmpl.form.invalidate('endDate', { name:'endBeforeStart', message:'End date cannot be before Start date' });
+        form.invalidate('endDate', { name:'endBeforeStart', message:'End date cannot be before Start date' });
       }
   }
 ```
@@ -577,7 +618,7 @@ TBA
 
 > **NOTE: throughout this document `tmpl` keyword refers to the template instance object, even if not explicitly stated.** 
 
-* `Forms.mixin(template, options)` - options is an object, you can turn template helpers and events on and off and you can also initialize the document and/or the schema (As an alternative to using `tmpl.form.doc()` and `tmpl.form.schema()` methods). See [Adding validation](#adding-validation) for an example of how to structure the schema object. 
+* `Forms.mixin(template, options)` - options is an object, you can turn template helpers and events on and off and you can also initialize the document and/or the schema (As an alternative to using `form.doc()` and `form.schema()` methods). See [Adding validation](#adding-validation) for an example of how to structure the schema object. 
   
 ```js
   var options = {
@@ -633,7 +674,7 @@ Each of the above methods checks for `isDefaultPrevented` and `preventDefault` i
 ## Forms Events
 --------------
 
-* `$(field).trigger('propertyChange', [changes])` - on input change, the forms package triggers this event, `changes` is an object who's key-value pairs represent the properties which have changed. Under normal usage `changes` should have only one key-value pair, however you have the option to add as many key-value pairs as you like, if for example you want to store a date on three seperate properties, but are using a single input element for user input, then one `change` event would trigger a single `propertyChange` event with three key-value pairs, rather than triggering three events.
+* `$(field).trigger('propertyChange', [changes])` - on input change, the forms package triggers this event, `changes` is an object who's key-value pairs represent the properties which have changed. Under normal usage `changes` should have only one key-value pair.
 * `$(field).trigger('documentChange', [doc, changes])` - on propertyChange `Forms` triggers this event, `changes` is an object who's key-value pairs represent the properties which have changed.
 * `$(field).trigger('propertyInvalid', [doc, errors])` - `Forms` triggers this event if this particular field was validated singally (e.g. by calling `tmpl.form.invalidate`), `doc` is the form doc, `errors` is an array of errors related to the property which is invalid.
 * `$(form).trigger('documentInvalid', [doc, errors])` - `Forms` triggers `documentInvalid` when the doc is validated in the context of an event and the doc is invalid (e.g. `form.submit`, `form.validate`, `form.invalidate`, etc.), `doc` and `errors` are as above, except that the `errors` array is not filtered by any fields.
