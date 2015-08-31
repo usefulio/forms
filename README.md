@@ -152,7 +152,7 @@ Template.FormsDemoApp.events({
 ```
 
 ### Manipulation of document data before submit
-There are circumstances where the input element value does not match the value that you would like to store in the document e.g. converting a date picker value to number-of-days or performing a unit conversion. You can modify document values before submission either by monitoring for the `propertyChange` event or by creating a custom `submit` handler. Creating a custom `submit` handler is covered in [Advanced topics](#advanced-topics). 
+There are circumstances where the input element value does not match the value that you would like to store in the document e.g. converting a date picker value to number-of-days or performing a unit conversion. You can modify document values before submission either by monitoring for the `propertyChange` event or by creating a custom `submit` handler. Creating a custom `submit` handler is not covered in this document. 
 
 Here follows an example of modifying a document value by capturing `propertyChange`. You can use `tmpl.form.doc([field name], [value])` method to both read and write any document value (if you pass a field name as a parameter) or the entire document (see [Instance API](#instance-api) for details).
 
@@ -474,12 +474,86 @@ Template.FormsDemoApp.events({
 ```
 
 ## Advanced topics
-- (adding onCreated and onMixin hooks)
-- (overriding events - triggering the doc update/validation process flow manually )
-- (overriding helpers - manipulating the internal doc directly)
-- (triggering custom errors)
-- (creating interconnected input fields using propertyChange e.g. range slider)
-TBA
+### Creating interconnected input fields using `propertyChange`
+You can take advantage of the `propertyChange` event in order to create linked fields, i.e. fields with values that depend on each other. Below is an example of creating two Date-type fields that need to have a minimum difference of two days. 
+
+```html
+<template name="FormsDemoAppHome">
+  <form>
+    <label for="Start date">Start date</label>
+    <input type="date" name="startDate" value={{startDate}}>
+
+    <label for="endDate">End date</label>
+    <input type="date" name="endDate" value={{endDate}}>
+
+    <button type="submit" class="btn">Submit form</button>
+  </form>
+</template>
+```
+
+```js
+Forms.mixin(Template.FormsDemoAppHome);
+
+Template.FormsDemoAppHome.helpers({
+  startDate: function () {
+    var startDate = Forms.instance().get('startDate');
+    return startDate.format("YYYY-MM-DD");
+  },
+  endDate: function () {
+    var endDate = Forms.instance().get('endDate');
+    return endDate.format("YYYY-MM-DD");
+  }
+});
+
+// The following event handlers check if startDate and endDate are at least 2 days apart.
+// If while changing any of the two fields the distance gets < 2 days then the other field 
+// is automatically adjusted accordingly. 
+Template.FormsDemoAppHome.events({
+  'propertyChange [name=endDate]': function (e, tmpl, changes) {
+      var endDate = moment(changes.endDate);
+      var startDate = tmpl.form.get('startDate');
+      var diff = endDate.diff(startDate,'days');
+
+      if (diff < 2) {
+        startDate = endDate.clone();
+        startDate.subtract(2, 'days');
+      }
+      tmpl.form.set('startDate', startDate);
+  },  
+  'propertyChange [name=startDate]': function (e, tmpl, changes) {
+      var startDate = moment(changes.startDate);
+      var endDate = tmpl.form.get('endDate');
+      var diff = endDate.diff(startDate,'days');
+
+      if (diff < 2) {
+        endDate = startDate.clone();
+        endDate.add(2, 'days');
+      }
+      tmpl.form.set('endDate', endDate);
+  }
+});
+
+```
+
+### Triggering custom validation errors
+
+There are circumstances where a validation error may need to be triggered outside the submit process. For instance, use of asynchronous APIs (e.g. address or post code validation), dependency on timed events, dependency on other field values etc. You can use the `invalidate` method to add a custom invalidation error to a field and, if `eventTarget` is passed, to trigger a `documentInvalid` or `propertyInvalid` event. (see [Instance API](#instance-api) for more details). See the usage example below which invalidates the `startDate` field if it is later than the value of `endDate` field.
+
+```js
+Template.FormsDemoAppHome.events({
+  // Using propertyChange event handler means that this will execute, and therefore the errors template helpers will get updated reactively, whenever the field value changes. 
+  'propertyChange [name=endDate]': function (event, tmpl, changes) {
+      var endDate = moment(changes.endDate);
+      var startDate = moment(tmpl.form.doc('startDate'));
+      var diff = endDate.diff(startDate);
+
+      if (diff < 0) {
+        // the second parameter of invalidate is an error object (or array of error objects)
+        // An error object gets two parameters an error `name` and an error `message` 
+        tmpl.form.invalidate('endDate', { name:'endBeforeStart', message:'End date cannot be before Start date' });
+      }
+  }
+```
 
 ## Contributing
 TBA
