@@ -555,6 +555,21 @@ Template.FormsDemoAppHome.events({
   }
 ```
 
+### Overriding Forms events and template helpers
+There are cases where overriding events and helpers may be useful in order to prevent conflicts with your own template helpers, or because you don’t want the default `submit`, `change` events to be caught (you may want to handle them yourself). To disable either the default event handlers or the provided template helpers you can pass a second parameter to the `Forms.mixin` method when initializing `Forms`. For example: 
+
+```js
+  var options = {
+    helpers: false, // disables template helpers. Default is true.
+    events: false // disables event handlers. Default is true.
+  }
+
+  Forms.mixin(Template.FormsDemoApp, options);  
+```
+
+> Note that if you disable event handling you need to update the internal document and trigger the validation process manually.
+
+
 ## Contributing
 TBA
 
