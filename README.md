@@ -3,7 +3,7 @@ Forms
 **TLDR; Go to [Getting started](#getting-started) to start having fun with Forms now.**
 
 ## What is Forms?
-Easy to use fully reactive forms. It was built ground-up aiming to eliminate the boilerplate of building forms in our applications (without creating more boilerplate).
+Easy to use fully reactive forms. It was from built ground-up aiming to eliminate the boilerplate of building forms in our applications (without creating more boilerplate).
 
 `Forms` package is fully reactive, fully agnostic of and independent from how information is presented, including how validation errors are displayed and to any use of CSS.
 
@@ -31,7 +31,7 @@ Table of Contents
 
 ```meteor add useful:forms```
 
-**Step 2:** Create your form template. Note that there is no need to add any special css or template inclusions. `Forms` simply detects html `<form>` tags.  
+**Step 2:** Create your form template. Note that there is no need to add any special css or template inclusions. `Forms` simply detects html `<form>` tags. This means you are free to use whatever css framework or html structure you wish, and change it however/whenever you need to.  
 
 ```html
 <template name="FormsDemoApp">
@@ -100,6 +100,8 @@ will result in a document object similar to:
 
 **Example: Retrieving `name` field value using `Forms` JavaScript API**
 ```js
+Forms.mixin(Template.FormsDemoApp);
+
 Template.FormsDemoApp.helpers({
   'nameIsBob': function () {
     var form = Forms.instance()
@@ -145,6 +147,8 @@ Here follows a simple insert scenario without validation:
 
 ```js
 var Contacts = new Mongo.Collection('contacts');
+
+Forms.mixin(Template.FormsDemoApp);
 
 Template.FormsDemoApp.events({
   'documentSubmit': function (event, tmpl, doc) {
@@ -211,17 +215,7 @@ Template.FormsDemoApp.onRendered(function () {
 });
 ```  
 
-> Note that the internal `Forms` document is also attached to the current template data context (e.g. Template.instance().data.doc) and it is also monitored reactively for updates. e.g. you can also reactively update the value of a field in a template helper as follows: 
-```js 
-'myhelper': function () {
-  var doc = Template.instance().data.doc;
-  doc.myField = 'a new value'; // this will also update the internal reactive document.
-
-  // ... do something more meaningful here 
-  // ... and return something meaningful
-  return true;
-}
-```
+> Note that the internal `Forms` document is also attached to the current template data context (e.g. Template.instance().data.doc) and it is also monitored reactively for updates.
 
 ## Adding validation
 Adding validation is as simple as defining a schema for the form document. A schema can be defined using `Forms.instance().schema` method and the following syntax:
@@ -645,7 +639,7 @@ A `Forms` instance stores state in three places:
 Instance Api
 --------------
 
-Each template instance which has been extended by the `Forms` library should provide a single `form` property from which the form helpers are available:
+Each template instance which has been extended by the `Forms` library provides a single `form` property from which the form helpers are available:
 
 * `tmpl.form` - an object, also the `this` context when form helpers are called
 * `tmpl.form.doc([fieldName, [fieldValue]])` a method which gets or sets the document or one of it's properties
@@ -686,6 +680,6 @@ Each of the above methods checks for `isDefaultPrevented` and `preventDefault` i
 
 The forms package handles the following events, all event handlers are simply passthrough methods to the relevant form helpers, like so:
 
-* `change input` -> `form.change({[e.currentTarget.name]: e.currentTarget.value}, e.currentTarget, e);`
+* `change input, change textarea` -> `form.change({[e.currentTarget.name]: e.currentTarget.value}, e.currentTarget, e);`
 * `propertyChange` `form.change(changes, e.currentTarget, e);`
 * `submit` -> `form.submit(e.currentTarget, e);`
