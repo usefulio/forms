@@ -1,6 +1,6 @@
 Package.describe({
 	name: 'useful:forms',
-	version: '1.0.1',
+	version: '1.0.2',
 	summary: 'Form Template Mixin',
 	git: 'https://github.com/usefulio/forms',
 	documentation: 'README.md'
