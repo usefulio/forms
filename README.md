@@ -3,7 +3,7 @@ Forms
 **TLDR; Go to [Getting started](#getting-started) to start having fun with Forms now.**
 
 ## What is Forms?
-Easy to use fully reactive forms. It was from built ground-up aiming to eliminate the boilerplate of building forms in our applications (without creating more boilerplate).
+Easy to use fully reactive forms. It was built from the ground up aiming to eliminate the boilerplate of building forms in our applications (without creating more boilerplate).
 
 `Forms` package is fully reactive, fully agnostic of and independent from how information is presented, including how validation errors are displayed and to any use of CSS.
 
@@ -87,7 +87,7 @@ Most of the interaction with the `Forms` API takes place via three interfaces:
 will result in a document object similar to:
 ```js
 {
-  name: '...',
+  fullName: '...',
   telephone: '...'
 }
 ```
@@ -98,19 +98,19 @@ will result in a document object similar to:
 - through the built-in template helpers _(reactive)_ (see examples below)
 - passed as an argument with the 'documentSubmit' event _(non-reactive)_ (see [Inserting a new document](#inserting-a-new-document-without-validation))
 
-**Example: Retrieving `name` field value using `Forms` JavaScript API**
+**Example: Retrieving `fullName` field value using `Forms` JavaScript API**
 ```js
 Forms.mixin(Template.FormsDemoApp);
 
 Template.FormsDemoApp.helpers({
   'nameIsBob': function () {
     var form = Forms.instance()
-    return form.doc('name') === 'bob';
+    return form.doc('fullName') === 'bob';
   }
 });
 ```
 
-**Example: Getting `name` field value using `Forms` template helpers** 
+**Example: Getting `fullName` field value using `Forms` template helpers** 
 The text of the `<p>` section will be updated reactively every time the value of `name` input changes.
 ```html
 <template name="FormsDemoApp">
@@ -184,7 +184,7 @@ Template.FormsDemoApp.events({
 <template name="FormsDemoApp">
   <form>
     <label for="fullName">Name</label>
-    <input type="text" name="fullName" value={{doc name}}>
+    <input type="text" name="fullName" value={{doc fullName}}>
 
     <label for="telephone">Telephone</label>
     <input type="text" name="telephone" value={{doc telephone}}>
@@ -272,8 +272,8 @@ Forms.mixin(Template.FormsDemoApp);
 Template.FormsDemoApp.onCreated(function() {
     // Forms.instance() is an alias to Template.instance().forms
     Forms.instance().schema({
-      'name': function (value, property) {
-        // check that name is a non-empty string
+      'fullName': function (value, property) {
+        // check that fullName is a non-empty string
         var isValid = false;
         var errorMessage = "Name cannot be empty";
 
@@ -478,7 +478,7 @@ Template.FormsDemoApp.events({
 <template name="FormsDemoApp">
   <form>
     <label for="fullName">Name</label>
-    <input type="text" name="fullName" value={{doc name}}>
+    <input type="text" name="fullName" value={{doc fullName}}>
     <div class="error">{{#with error "fullName"}}{{message}}{{/with}}</div>
 
     <label for="telephone">Telephone</label>
@@ -497,7 +497,7 @@ Template.FormsDemoApp.events({
     {{/each}}
 
     <label for="fullName">Name</label>
-    <input type="text" name="fullName" value={{doc name}}>
+    <input type="text" name="fullName" value={{doc fullName}}>
 
     <label for="telephone">Telephone</label>
     <input type="text" name="telephone" value={{doc telephone}}>
@@ -512,7 +512,7 @@ You can take advantage of the `propertyChange` event in order to create linked f
 ```html
 <template name="FormsDemoAppHome">
   <form>
-    <label for="Start date">Start date</label>
+    <label for="startDate">Start date</label>
     <input type="date" name="startDate" value={{startDate}}>
 
     <label for="endDate">End date</label>
