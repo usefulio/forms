@@ -1,7 +1,7 @@
 Package.describe({
 	name: 'useful:forms',
-	version: '1.0.2',
-	summary: 'Form Template Mixin',
+	version: '1.0.3',
+	summary: 'Fully reactive forms which don\'t mess with your html',
 	git: 'https://github.com/usefulio/forms',
 	documentation: 'README.md'
 });
