@@ -218,6 +218,9 @@ Template.FormsDemoApp.onRendered(function () {
 > Note that the internal `Forms` document is also attached to the current template data context (e.g. Template.instance().data.doc) and it is also monitored reactively for updates.
 
 ## Adding validation
+
+*Important Note* Support for the built in validators is temporary, we plan to move the validators to a separate package soon as part of a move to a more flexible validation api.
+
 Adding validation is as simple as defining a schema for the form document. A schema can be defined using `Forms.instance().schema` method and the following syntax:
 ```js
   var form = Forms.instance();
