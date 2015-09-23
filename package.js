@@ -15,6 +15,7 @@ Package.onUse(function(api) {
 	api.use([
 		'templating'
 		, 'underscore'
+		, 'check'
 	], ['client', 'server']);
 
 	api.use([
@@ -53,6 +54,7 @@ Package.onTest(function(api) {
 		, 'reactive-dict'
 		, 'reactive-var'
 		, 'mongo'
+		, 'tracker'
 	]);
 
 	// Templates
