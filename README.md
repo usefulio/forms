@@ -184,10 +184,10 @@ Template.FormsDemoApp.events({
 <template name="FormsDemoApp">
   <form>
     <label for="fullName">Name</label>
-    <input type="text" name="fullName" value={{doc fullName}}>
+    <input type="text" name="fullName" value={{doc 'fullName'}}>
 
     <label for="telephone">Telephone</label>
-    <input type="text" name="telephone" value={{doc telephone}}>
+    <input type="text" name="telephone" value={{doc 'telephone'}}>
   </form>
 </template>
 ```
@@ -481,11 +481,11 @@ Template.FormsDemoApp.events({
 <template name="FormsDemoApp">
   <form>
     <label for="fullName">Name</label>
-    <input type="text" name="fullName" value={{doc fullName}}>
+    <input type="text" name="fullName" value={{doc 'fullName'}}>
     <div class="error">{{#with error "fullName"}}{{message}}{{/with}}</div>
 
     <label for="telephone">Telephone</label>
-    <input type="text" name="telephone" value={{doc telephone}}>
+    <input type="text" name="telephone" value={{doc 'telephone'}}>
     <div class="error">{{#with error "telephone"}}{{message}}{{/with}}</div>
   </form>
 </template>
@@ -500,10 +500,10 @@ Template.FormsDemoApp.events({
     {{/each}}
 
     <label for="fullName">Name</label>
-    <input type="text" name="fullName" value={{doc fullName}}>
+    <input type="text" name="fullName" value={{doc 'fullName'}}>
 
     <label for="telephone">Telephone</label>
-    <input type="text" name="telephone" value={{doc telephone}}>
+    <input type="text" name="telephone" value={{doc 'telephone'}}>
   </form>
 </template>
 ```
