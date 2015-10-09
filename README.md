@@ -1,40 +1,32 @@
-Forms
-===============
-**TLDR; Go to [Getting started](#getting-started) to start having fun with Forms now.**
+Useful Forms
+==============
 
-## What is Forms?
-Easy to use fully reactive forms. It was built from the ground up aiming to eliminate the boilerplate of building forms in our applications (without creating more boilerplate).
+Useful Forms extends your templates to make it easy to build reactive forms.
 
-`Forms` package is fully reactive, fully agnostic of and independent from how information is presented, including how validation errors are displayed and to any use of CSS.
+**Write forms the way you want to:**
 
-There are two things that `Forms` package does well:
+1. Your own html
+2. Your own custom components
+3. Automatic access to the doc on submit and via the api
+5. Events that make sense for forms
+6. Reactive template helpers that make sense for forms
+7. An awesome api you can use anywhere in your javascript
 
-* seamless and fully reactive interface for capturing and retrieving form data and form manipulation events  
-* flexible and easy to configure data validation
+<!-- XXX build a tutorial and reference it here -->
 
-Table of Contents
----------------
-- [Getting started](#getting-started)
-- [Accessing Form fields data](#accessing-form-fields-data)
-- [Inserting a new document](#inserting-a-new-document-without-validation)
-- [Manipulation of document data before submit](#manipulation-of-document-data-before-submit)
-- [Editing an existing document](#editing-an-existing-document)
-- [Adding validation](#adding-validation)
-- [Handling validation errors](#handling-validation-errors)
-- [Advanced topics](#advanced-topics)
-- [Contributing](#contributing)
-- [Global API](#global-api)
+Read getting started (below) then checkout the [api docs](#api-docs).
 
-## Getting started
+Getting started
+--------------
 
 **Step 1:** Add `Forms` package to you app:
 
-```meteor add useful:forms```
+    meteor add useful:forms
 
 **Step 2:** Create your form template. Note that there is no need to add any special css or template inclusions. `Forms` simply detects html `<form>` tags. This means you are free to use whatever css framework or html structure you wish, and change it however/whenever you need to.  
 
 ```html
-<template name="FormsDemoApp">
+<template name="AddContactForm">
   <form>
     <label for="fullName">Name</label>
     <input type="text" name="fullName">
@@ -42,7 +34,7 @@ Table of Contents
     <label for="telephone">Telephone</label>
     <input type="text" name="telephone">
 
-    <button type="submit">Submit form</button>
+    <button type="submit">Add Contact</button>
   </form>
 </template>
 ```
@@ -50,639 +42,406 @@ Table of Contents
 **Step 3:** Add `Forms` functionality to your template using the `mixin` method in your client code.
 ```js
 if (Meteor.isClient) {
-  Forms.mixin(Template.FormsDemoApp);  
-}
-```  
-
-That's it! You can now enjoy all the amazing features, advanced flexibility and outstanding simplicity of the [Forms API](#global-api).  
-
-Most of the interaction with the `Forms` API takes place via three interfaces:
-
-- **The `form` object** which is attached to the template instance when `Forms.mixin` is executed. (see [Accessing Form fields data](#accessing-form-fields-data), [Manipulation of document data before submit](#manipulation-of-document-data-before-submit) and [Editing an existing document](#editing-an-existing-document) for snippets using the `form` object and [Instance state](#instance-state) and [Instance API](#instance-api) for API details)
-> **NOTE 1:** The `Forms.instance()` method is equivalent to `Template.instance().form` but also includes a `null` test in case the template instance or the form object are not yet initialized.
-**NOTE 2:** throughout this document `tmpl` keyword refers to the template instance object, even if not explicitly stated.
-
-
-- A set of **events triggered by `Forms`** to give the developer maximum flexiblity on how to handle different validation scenarios. (see [Inserting a new document](#inserting-a-new-document-without-validation) and [Handling validation errors](#handling-validation-errors) for examples and [Forms Events](#forms-events) for details)
-- A set of **built-in `Forms` reactive helpers** which give access to the form fields values and any generated validation errors (see [Accessing Form fields data](#accessing-form-fields-data), [Editing an existing document](#editing-an-existing-document) and [Handling validation errors](#handling-validation-errors) for examples)
-
-
-##Accessing Form fields data
-`Forms` maintains a reactive document internally in order to store the current values of the form fields. The `name` attribute of an input element is used to determine the name of each document field. For example:
-
-```html
-<template name="FormsDemoApp">
-  <form>
-    <label for="fullName">Name</label>
-    <input type="text" name="fullName">
-
-    <label for="telephone">Telephone</label>
-    <input type="text" name="telephone">
-
-    <button type="submit">Submit form</button>
-  </form>
-</template>
-```
-
-will result in a document object similar to:
-```js
-{
-  fullName: '...',
-  telephone: '...'
+  Forms.mixin(Template.AddContactForm);  
 }
 ```
 
-`Forms` monitor the template form fields for changes which are automatically captured in the internal reactive document (by monitoring `change` events). The internal document can then be accessed in one of the following ways:
-
-- through the javascript API _(reactive)_ (see examples below)
-- through the built-in template helpers _(reactive)_ (see examples below)
-- passed as an argument with the 'documentSubmit' event _(non-reactive)_ (see [Inserting a new document](#inserting-a-new-document-without-validation))
-
-**Example: Retrieving `fullName` field value using `Forms` JavaScript API**
+**Step 4:** Use the Forms `documentSubmit` event to easily get the doc when the user submits the form.
 ```js
-Forms.mixin(Template.FormsDemoApp);
-
-Template.FormsDemoApp.helpers({
-  'nameIsBob': function () {
-    var form = Forms.instance()
-    return form.doc('fullName') === 'bob';
-  }
-});
-```
-
-**Example: Getting `fullName` field value using `Forms` template helpers** 
-The text of the `<p>` section will be updated reactively every time the value of `name` input changes.
-```html
-<template name="FormsDemoApp">
-  <form>
-    <label for="fullName">Name</label>
-    <input type="text" name="fullName" >
-
-    <label for="telephone">Telephone</label>
-    <input type="text" name="telephone">
-    <button type="submit">Submit form</button>
-    <p>The name is: {{doc 'fullName'}}</p>
-  </form>
-</template>
-```
-
-## Inserting a new document _(without validation)_
-When a `submit` event is triggered, `Forms` automatically prevents the default submit handler, executes any validation specified in the schema (see [Adding validation](#adding-validation) for more details on specifying a schema), and triggers one of two javascript events:
-
-- `documentSubmit` [Forms package event](#forms-events) if validation was successful
-- `documentInvalid` [Forms package event](#forms-events) if validation was unsuccessful
-
-Here follows a simple insert scenario without validation:
-```html
-<template name="FormsDemoApp">
-  <form>
-    <label for="fullName">Name</label>
-    <input type="text" name="fullName">
-
-    <label for="telephone">Telephone</label>
-    <input type="text" name="telephone">
-  </form>
-</template>
-```
-
-```js
-var Contacts = new Mongo.Collection('contacts');
-
-Forms.mixin(Template.FormsDemoApp);
-
-Template.FormsDemoApp.events({
-  'documentSubmit': function (event, tmpl, doc) {
-    // Note that documentSubmit will also pass the validated document
-    // as a parameter. This instance of the document object is NOT reactive.
-    Contacts.insert(doc);
-  };
-});
-```
-
-### Manipulation of document data before submit
-There are circumstances where the input element value does not match the value that you would like to store in the document e.g. converting a date picker value to number-of-days or performing a unit conversion. You can modify document values before submission either by monitoring for the `propertyChange` event or by creating a custom `submit` handler. Creating a custom `submit` handler is not covered in this document. 
-
-Here follows an example of modifying a document value by capturing `propertyChange`. You can use `Forms.instance().doc([field name], [value])` method to both read and write any document value (if you pass a field name as a parameter) or the entire document (see [Instance API](#instance-api) for details).
-
-```js
-// In the following example we want to ensure that 'name' is always stored in our document capitalized.
-Template.FormsDemoApp.events({
-  // Note how propertyChange event passes all changes as a parameter.
-  // The parameter contains a set of key-value pairs.
-  'propertyChange': function (e, tmpl, changes) {
-    if (changes.name)
-      Forms.instance().doc('name', changes.name.toUpperCase());
-    // the method call above is equivalent to Forms.instance().doc, we use the shorter version here for brevity.  
-  }
-});
-```
-
-## Editing an existing document
-`Forms` gives access to the document fields through the `{{doc [field name]}}` template helper. This is especially useful when you want to create an edit-type form. Consider the following example:
-
-```html
-<template name="FormsDemoApp">
-  <form>
-    <label for="fullName">Name</label>
-    <input type="text" name="fullName" value={{doc fullName}}>
-
-    <label for="telephone">Telephone</label>
-    <input type="text" name="telephone" value={{doc telephone}}>
-  </form>
-</template>
-```
-
-You can therefore easily create an edit-type form by using `Forms` template helpers for setting the values and by appropriate initialization of the `Forms` document when the template is being rendered. e.g.:
-
-```js
-Template.FormsDemoApp.onRendered(function () {
-  var form = Forms.instance();
-  // for this example we assume that the data context of the template instance contains the document to be edited.
-  form.doc(tmpl.data);
-});
-```
-
-or if you expect the data context to change dynamically and want to update the form document reactively:
-
-```js
-Template.FormsDemoApp.onRendered(function () {
-  var tmpl = this;
-  // for this example we assume that the data context of the template instance contains the document to be edited.
-  tmpl.autorun(function () {
-    var data = Template.currentData();
-    Forms.instance().doc(tmpl.data);
-  });
-});
-```  
-
-> Note that the internal `Forms` document is also attached to the current template data context (e.g. Template.instance().data.doc) and it is also monitored reactively for updates.
-
-## Adding validation
-
-*Important Note* Support for the built in validators is temporary, we plan to move the validators to a separate package soon as part of a move to a more flexible validation api.
-
-Adding validation is as simple as defining a schema for the form document. A schema can be defined using `Forms.instance().schema` method and the following syntax:
-```js
-  var form = Forms.instance();
-
-  form.schema({
-    'field-name': function (value, property) {
-      // the first parameter holds the current value of the field
-      // the second parameter holds the field/property name
-      // the function should return `true` if valid or an error message
-      // if invalid.
-      var isValid = false;
-      var errorMessage = "field is invalid";
-      if (_someValidationCheckIsTrue_) {
-        isValid = true
-      }
-
-      return isValid || errorMessage;
+if (Meteor.isClient) {
+  Forms.mixin(Template.AddContactForm);
+  Template.AddContactForm.events({
+    'documentSubmit': function (e, tmpl, doc) {
+      Contacts.insert(doc);
     }
-    ...
   });
+}
 ```
 
-There are several options for passing the schema definition to the current `Forms` instance such as: 
+API Docs
+-----------
 
-- using the `Forms.instance().schema` method 
-- using the `tmpl.form.schema` method
-- during initialization as an `option` property passed to `Forms.mixin` method (see [Overriding Forms events and template helpers](#overriding-forms-events-and-template-helpers))
-- Reactively by setting the `schema` property of the current template instance data context (Template.instance().data.schema = {...}). 
+> **NOTE: throughout this document `tmpl` keyword refers to the template instance object, even if not explicitly stated.**
 
+###Global API
 
-Below is an example of adding a schema inside the form template `onCreated` hook in order to ensure that `Forms` instance has been initialized.
-
-We will use the following template as a reference for the two validation examples that follow.
-```html
-<template name="FormsDemoApp">
-  <form>
-    <label for="fullName">Name</label>
-    <input type="text" name="fullName">
-
-    <label for="telephone">Telephone</label>
-    <input type="text" name="telephone">
-
-    <label for="nights">How many nights will you be staying?</label>
-    <input type="number" name="nights">
-  </form>
-</template>
-```
-### Adding custom validators
-```js
-Forms.mixin(Template.FormsDemoApp);
-
-Template.FormsDemoApp.onCreated(function() {
-    // Forms.instance() is an alias to Template.instance().forms
-    Forms.instance().schema({
-      'fullName': function (value, property) {
-        // check that fullName is a non-empty string
-        var isValid = false;
-        var errorMessage = "Name cannot be empty";
-
-        if (_.isString(value) && value.length)
-          isValid = true;
-
-        return isValid || errorMessage;
-      },
-      'telephone': function (value, property) {
-        // checks that telephone is a 10 digit number
-        var isValid = false;
-        var phoneno = /^\d{10}$/;  
-        var errorMessage = "Telephone must be a 10-digit number";
-
-        if (value.match(phoneno))
-          isValid = true;
-
-        return isValid || errorMessage;
-      },
-      'nights': function (value, property) {
-        // checks that nights is greater than zero
-        var isValid = false;
-        var errorMessage = "Number of nights should be greater than 1";
-
-        if ((value % 1 === 0) && (value > 0))
-          isValid = true;
-
-        return isValid || errorMessage;
-      }
-    });
-});
-```
-
-### Using built-in validators
-`Forms` comes with a set of built-in validators and regex to speed-up schema definitions. Validators are accessed through the `Forms.validators` object and take a single object `context` as a parameter. `context` must contain two parameters: `value` and `options`. The content of `options` depends on the context of the specific validator. See below for more details on how the two parameters are used in each case.
-
-#### `oneOf` 
-
-Returns `true` if the value in `value` is present in the list in `options`. (Alias for underscore.js `_.contains`).
-
-  Usage example:
-
-  ```js
-  var carTypes = {'sport', 'sedan', 'hatchback', 'suv', 'truck', 'cabrio'};
-
-  Forms.instance().schema({
-    'carType': function (value, property) {
-      // checks that nights is greater than zero
-      var isValid = false;
-      var errorMessage = "The car type you entered is not recognized";
-      var context = {
-        options: carTypes,
-        value: value
-      };
-
-      isValid = Forms.validators.oneOf(context);
-      return isValid || errorMessage;
-  });
-  ```
-
-#### `min` 
-Returns `true` if the value in `value` is a number and greater or equal to the value in `options`.
-#### `max` 
-Returns `true` if the value in `value` is a number and smaller or equal to the value in `options`.
-
-Usage example:
-
-```js
-Forms.instance().schema({
-  'nights': function (value, property) {
-    var isValid = false;
-    var errorMessage = "Number of nights must be at least 1";
-    var context = {
-      options: 1, // that's the minimum value
-      value: value
-    };
-
-    isValid = Forms.validators.min(context);
-    return isValid || errorMessage;
-});
-```
-
-#### `type` 
-Returns `true` if the value in `value` is of the type specified in `options`. The following types are supported: `String`, `Number`, `Date`, `Object`, `Array
-
-  Usage example:
-  ```js
-  Forms.instance().schema({
-    'startDate': function (value, property) {
-      var isValid = false;
-      var errorMessage = "startDate is not a valid Date object";
-      var context = {
-        options: "Date",
-        value: value
-      };
-
-      isValid = Forms.validators.type(context);
-      return isValid || errorMessage;
-  });
-  ```
-
-#### `minLength` 
-Returns `true` if value in `value` is a String with length greater or equal to the value in `options`.
-#### `maxLength` 
-Returns `true` if value in `value` is a String with length less or equal to the value in `options`.
-
-  Usage example:
-  ```js
-  Forms.instance().schema({
-    'nickname': function (value, property) {
-      var isValid = false;
-      var errorMessage = "nickname must be at least 6 characters long";
-      var context = {
-        options: 6,
-        value: value
-      };
-
-      isValid = Forms.validators.minLength(context);
-      return isValid || errorMessage;
-  });
-  ```
-
-#### `minCount` 
-Returns `true` if value in `value` is an Array with length greater or equal to the value in `options`.
-#### `maxCount` 
-Returns `true` if value in `value` is an Array with length less or equal to the value in `options`.
-
-  Usage example:
-  ```js
-  Forms.instance().schema({
-    'lotteryNumbers': function (value, property) {
-      var isValid = false;
-      var errorMessage = "You must pick at least 6 lottery numbers";
-      var context = {
-        options: 6,
-        value: value
-      };
-
-      isValid = Forms.validators.minCount(context);
-      return isValid || errorMessage;
-  });
-  ```
-#### `regex` 
-Returns `true` if value in `value` matches the regex in `options`. Regex in `options` can be a regex object or an object like { pattern: "asdf", flags: "i" } or an array of either. The following built-in regular expressions are provided through the `Forms.regexp` object (see regexps.js for more details):
-
-  - Forms.regexp.EMAIL
-  - Forms.regexp.DOMAIN
-  - Forms.regexp.WEAK_DOMAIN
-  - Forms.regexp.IP
-  - Forms.regexp.IPV4
-  - Forms.regexp.IPV6
-  - Forms.regexp.URL
-  - Forms.regexp.ID
-  - Forms.regexp.ZIP_CODE
-
-  Usage example:
-  ```js
-  Forms.instance().schema({
-    'email': function (value, property) {
-      var isValid = false;
-      var errorMessage = "invalid email address format";
-      var context = {
-        options: Forms.regexp.EMAIL,
-        value: value
-      };
-
-      isValid = Forms.validators.regex(context);
-      return isValid || errorMessage;
-  });
-  ```
-
-## Handling validation errors
-`Forms` will automatically validate the data contained in a form against a defined schema when a `submit` event is detected. Depending on the outcome of the validation tests one of two javascript events will be triggered:
-
-- `documentSubmit` [Form package event](#forms-events) if validation was successful
-- `documentInvalid` [Form package event](#forms-events) if validation was unsuccessful
-
-Here is an example of how capture a `documentInvalid` event. See [Inserting a new document](#inserting-a-new-document-without-validation) section for how to handle `documentSubmit`.
-
-```js
-Template.FormsDemoApp.events({
-  'documentInvalid': function (event, tmpl, doc, errors) {
-    // Note that documentInvalid will also pass the (in)validated document (non-reactive)
-    // and a collection of the detected errors (non-reactive) as parameters.  
-
-    // `errors` is an array of `error` objects.
-    // `error` object has two properties:
-    // `error.name`: the invalidated field name
-    // `error.message`: the error message returned from the schema validator
-    _.each(errors, function (error) {
-      console.log("The value of field: "+error.name+" is invalid, see the following error message for details: "+error.message);
-    });
-  };
-});
-```
-
-## Displaying errors
-`Forms` provides two template helpers for displaying validating errors.
-
-- helper `error` takes a field name as a single parameter and returns the respective error object reactively if the field does not pass the validation test. Usage example:
-```html
-<template name="FormsDemoApp">
-  <form>
-    <label for="fullName">Name</label>
-    <input type="text" name="fullName" value={{doc fullName}}>
-    <div class="error">{{#with error "fullName"}}{{message}}{{/with}}</div>
-
-    <label for="telephone">Telephone</label>
-    <input type="text" name="telephone" value={{doc telephone}}>
-    <div class="error">{{#with error "telephone"}}{{message}}{{/with}}</div>
-  </form>
-</template>
-```
-
-- helper `errors` returns a reactive list of all validation errors. Usage example:
-```html
-<template name="FormsDemoApp">
-  <form>  
-    {{#each errors}}
-      <p>{{./message}}</p>
-    {{/each}}
-
-    <label for="fullName">Name</label>
-    <input type="text" name="fullName" value={{doc fullName}}>
-
-    <label for="telephone">Telephone</label>
-    <input type="text" name="telephone" value={{doc telephone}}>
-  </form>
-</template>
-```
-
-## Advanced topics
-### Creating interconnected input fields using `propertyChange`
-You can take advantage of the `propertyChange` event in order to create linked fields, i.e. fields with values that depend on each other. Below is an example of creating two Date-type fields that need to have a minimum difference of two days. 
-
-```html
-<template name="FormsDemoAppHome">
-  <form>
-    <label for="startDate">Start date</label>
-    <input type="date" name="startDate" value={{startDate}}>
-
-    <label for="endDate">End date</label>
-    <input type="date" name="endDate" value={{endDate}}>
-
-    <button type="submit" class="btn">Submit form</button>
-  </form>
-</template>
-```
-
-```js
-Forms.mixin(Template.FormsDemoAppHome);
-
-Template.FormsDemoAppHome.helpers({
-  startDate: function () {
-    var startDate = Forms.instance().get('startDate');
-    return startDate.format("YYYY-MM-DD");
-  },
-  endDate: function () {
-    var endDate = Forms.instance().get('endDate');
-    return endDate.format("YYYY-MM-DD");
-  }
-});
-
-// The following event handlers check if startDate and endDate are at least 2 days apart.
-// If while changing any of the two fields the distance gets < 2 days then the other field 
-// is automatically adjusted accordingly. 
-Template.FormsDemoAppHome.events({
-  'propertyChange [name=endDate]': function (e, tmpl, changes) {
-      var form = Forms.instance();
-      var endDate = moment(changes.endDate);
-      var startDate = form.get('startDate');
-      var diff = endDate.diff(startDate,'days');
-
-      if (diff < 2) {
-        startDate = endDate.clone();
-        startDate.subtract(2, 'days');
-      }
-      form.set('startDate', startDate);
-  },  
-  'propertyChange [name=startDate]': function (e, tmpl, changes) {
-      var form = Forms.instance();
-      var startDate = moment(changes.startDate);
-      var endDate = form.get('endDate');
-      var diff = endDate.diff(startDate,'days');
-
-      if (diff < 2) {
-        endDate = startDate.clone();
-        endDate.add(2, 'days');
-      }
-      form.set('endDate', endDate);
-  }
-});
-
-```
-
-### Triggering custom validation errors
-
-There are circumstances where a validation error may need to be triggered outside the submit process. For instance, use of asynchronous APIs (e.g. address or post code validation), dependency on timed events, dependency on other field values etc. You can use the `invalidate` method to add a custom invalidation error to a field and, if `eventTarget` is passed, to trigger a `documentInvalid` or `propertyInvalid` event. (see [Instance API](#instance-api) for more details). See the usage example below which invalidates the `startDate` field if it is later than the value of `endDate` field.
-
-```js
-Template.FormsDemoAppHome.events({
-  // Using propertyChange event handler means that this will execute, and therefore the errors template helpers will get updated reactively, whenever the field value changes. 
-  'propertyChange [name=endDate]': function (event, tmpl, changes) {
-      var form = Forms.instance();
-      var endDate = moment(changes.endDate);
-      var startDate = moment(form.doc('startDate'));
-      var diff = endDate.diff(startDate);
-
-      if (diff < 0) {
-        // the second parameter of invalidate is an error object (or array of error objects)
-        // An error object gets two parameters an error `name` and an error `message` 
-        form.invalidate('endDate', { name:'endBeforeStart', message:'End date cannot be before Start date' });
-      }
-  }
-```
-
-### Overriding Forms events and template helpers
-There are cases where overriding events and helpers may be useful in order to prevent conflicts with your own template helpers, or because you don’t want the default `submit`, `change` events to be caught (you may want to handle them yourself). To disable either the default event handlers or the provided template helpers you can pass a second parameter to the `Forms.mixin` method when initializing `Forms`. For example: 
-
-```js
-  var options = {
-    helpers: false, // disables template helpers. Default is true.
-    events: false // disables event handlers. Default is true.
-  }
-
-  Forms.mixin(Template.FormsDemoApp, options);  
-```
-
-> Note that if you disable event handling you need to update the internal document and trigger the validation process manually.
-
-
-## Contributing
-TBA 
-
-# Global Api
-
-> **NOTE: throughout this document `tmpl` keyword refers to the template instance object, even if not explicitly stated.** 
-
-* `Forms.mixin(template, options)` - options is an object, you can turn template helpers and events on and off and you can also initialize the document and/or the schema (As an alternative to using `form.doc()` and `form.schema()` methods). See [Adding validation](#adding-validation) for an example of how to structure the schema object. 
+* `Forms.mixin(template, options)` - This method is available globally, use it to extend your template with the forms behavior.
   
 ```js
   var options = {
-    helpers: false, // disables template helpers. Default is true.
-    events: false, // disables event handlers. Default is true.
-    doc: documentObject,
-    schema: schemaObject
+    // set helpers to false to disable extending your template with
+    // the forms helpers
+    helpers: true,
+    // set events to false to disable extending your template with
+    // the forms events (so that no event handlers will be added to
+    // your template)
+    events: true,
+    // Set the initial doc for your form
+    doc: {},
+    // Set the schema for your form
+    schema: {}
   }
 
-  Forms.mixin(Template.FormsDemoApp, options);  
+  Forms.mixin(Template.AddContactForm, options);  
 ```
 
-* `Forms.instance()` alias for `Template.instance().form`
+* `Forms.instance()` This method is available globally and is an alias for `Template.instance().form` but will return `null` if `Template.instance()` is `null`.
 
-Instance state
---------------
+###Template form instance
 
-A `Forms` instance stores state in three places:
+Template instances are extended with a form instance which provides full access to the underlying state of the form.
 
-* `tmpl.form.doc` - The document being edited, under the hood we store this document in a ReactiveVar, we initialize this document from the data context, but you can also pass a default document in as part of the mixin options.
-* `tmpl.form.schema` - The schema for the document, an object who's keys contain validation rules to be run against the document at validation time. Under the hood we store this in a ReactiveVar, we initialize this object from the data context, but you can also pass in a default schema as part of the mixin options
-* `tmpl.form.errors` - A collection of errors, under the hood we store this as a null backed Mongo.Collection.
+You can get access to the form instance either by calling `Forms.instance()` or if you already have access to the template instance, you can access it via `tmpl.form` where `tmpl` is the template instance.
 
-Instance Api
---------------
+> **NOTE: in this section we'll use `form` to mean a form instance, what you would get by calling `Forms.instance()` from within your template javascript.**
 
-Each template instance which has been extended by the `Forms` library provides a single `form` property from which the form helpers are available:
+####Access the document
 
-* `tmpl.form` - an object, also the `this` context when form helpers are called
-* `tmpl.form.doc([fieldName, [fieldValue]])` a method which gets or sets the document or one of it's properties
-    * `tmpl.form.doc()` gets the doc
-    * `tmpl.form.doc('name')` gets the name property of the doc
-    * `tmpl.form.doc('name', 'John Smith')` sets the name property to 'John Smith'
-    * `tmpl.form.doc({ name: 'John Smith'  })` replaces the current document with the passed in object
-* `tmpl.form.schema([fieldName, [fieldValidator]])` - a method which gets or sets the schema or one of it's properties
-* `tmpl.form.errors([fieldName, [errorsArray]])` - a method which gets or sets the errors associated with the doc or one of it's properties
+* `form.doc()` - Use this method to reactively get the doc with the user's input. Should return a javascript object, or null/undefined.
 
-* `tmpl.form.get(fieldName)` - alias for `tmpl.form.doc(fieldName)`
-* `tmpl.form.set(fieldName, fieldValue)` - alias for `tmpl.form.doc(fieldName, fieldValue)`
+```js
+form.doc() // -> { firstName: 'joe', lastName: 'smith' }
+```
 
-* `tmpl.form.error([fieldName])` - alias for `_.first(tmpl.form.errors([fieldName]))`
-* `tmpl.form.isValid([fieldName])` - alias for `!_.any(tmpl.form.errors([fieldName]))`
-* `tmpl.form.isInvalid([fieldName])` - alias for `_.any(tmpl.form.errors([fieldName]))`
+* `form.doc(field)` - Pass a single string argument to get only a single field from the doc.
 
-* `tmpl.form.invalidate([fieldName], errors, [eventTarget], [originalEvent])` - alias for `tmpl.form.errors([fieldName,] errors)` if `eventTarget` is passed, will trigger a `documentInvalid` or `propertyInvalid` event, if the errors array is empty or null, clears errors for the doc or property
-* `tmpl.form.validate([fieldName], [eventTarget], [originalEvent])` - validates the current document or specified property against the current schema, if `eventTarget` is passed and the validated object or property is invalid, will trigger a `documentInvalid` or `propertyInvalid` event, calling this method will clear out any existing errors (for the doc or property being validated)
-* `tmpl.form.change(fieldName, fieldValue, [eventTarget], [originalEvent])` - calls `tmpl.form.set`, if `eventTarget` is passed will also trigger a `documentChanged` event
-* `tmpl.form.change(changes, [eventTarget], [originalEvent])` - calls `tmpl.form.set` once for each key-value pair in the `changes` object, if `eventTarget` is passed will also trigger a single `documentChanged` event
-* `tmpl.form.submit([eventTarget], [originalEvent])` - performs the default submit action (validates document), if `eventTarget` is passed will also trigger a `documentSubmit` event, or if the form is invalid a `documentInvalid` event.
+```js
+form.doc('firstName') // -> 'joe'
+```
 
-Each of the above methods checks for `isDefaultPrevented` and `preventDefault` if `originalEvent` is passed.
+* `form.doc(doc)` - Pass an object or null to set the whole doc
 
-## Forms Events
---------------
+```js
+form.doc({ _id: 'new' })
+form.doc() // -> { _id: 'new' }
+```
 
-* `$(field).trigger('propertyChange', [changes])` - on input change, the forms package triggers this event, `changes` is an object who's key-value pairs represent the properties which have changed. Under normal usage `changes` should have only one key-value pair.
-* `$(field).trigger('documentChange', [doc, changes])` - on propertyChange `Forms` triggers this event, `changes` is an object who's key-value pairs represent the properties which have changed.
-* `$(field).trigger('propertyInvalid', [doc, errors])` - `Forms` triggers this event if this particular field was validated singally (e.g. by calling `tmpl.form.invalidate`), `doc` is the form doc, `errors` is an array of errors related to the property which is invalid.
-* `$(form).trigger('documentInvalid', [doc, errors])` - `Forms` triggers `documentInvalid` when the doc is validated in the context of an event and the doc is invalid (e.g. `form.submit`, `form.validate`, `form.invalidate`, etc.), `doc` and `errors` are as above, except that the `errors` array is not filtered by any fields.
-* `$(form).trigger('documentSubmit', [doc])` - on form submit, or if `form.submit` method is called manually, if the document is valid the forms package should trigger this event.
+* `form.doc(field, value)` - Pass two arguments to set a single field, if the document does not exist, this method will create an empty doc first.
+
+```js
+form.doc('firstName', 'sam')
+form.doc() // -> { _id: 'new', firstName: 'sam' }
+```
+
+* `form.get()` - Use this method to reactively get the doc with the user's input. Should return a javascript object, or null/undefined.
+
+```js
+form.get() // -> { firstName: 'joe', lastName: 'smith' }
+```
+
+* `form.get(field)` - Pass a single string argument to get only a single field from the doc.
+
+```js
+form.get('firstName') // -> 'joe'
+```
+
+* `form.set(doc)` - Pass an object or null to set the whole doc
+
+```js
+form.set({ _id: 'new' })
+form.get() // -> { _id: 'new' }
+```
+
+* `form.set(field, value)` - Pass two arguments to set a single field
+
+```js
+form.set('firstName', 'sam')
+form.get() // -> { _id: 'new', firstName: 'sam' }
+```
+
+####Access the schema
+
+You can get and set the schema the same way you can get and set the doc.
+
+The schema is just an object, and the Forms package does not check it for any particular structure, currently we provide some default validation which expects fields in the schema to match fields in the doc, e.g. if you want to validate `doc.firstName` you would set `schema.firstName` as appropriate, however we have plans to change validation to be more pluggable, at which point we will probably deprecate getting/setting individual fields on the schema.
+
+* `form.schema()` - Use this method to reactively get the schema. Should return a javascript object, or null/undefined.
+
+```js
+form.schema() // -> { firstName: 'joe', lastName: 'smith' }
+```
+
+* `form.schema(field)` - Pass a single string argument to get only a single field from the schema.
+
+```js
+form.schema('firstName') // -> 'joe'
+```
+
+* `form.schema(schema)` - Pass an object or null to set the whole schema
+
+```js
+form.schema({ _id: 'new' })
+form.schema() // -> { _id: 'new' }
+```
+
+* `form.schema(field, value)` - Pass two arguments to set a single field
+
+```js
+form.schema('firstName', 'sam')
+form.schema() // -> { _id: 'new', firstName: 'sam' }
+```
+
+####Access errors
+
+The Forms package stores errors in a null-backed collection, you can get and set errors using the forms api.
+
+> **NOTE: The `errors`, `error`, `isValid`, and `isInvalid` methods do not validate the form, instead they return results based on the current state of the errors collection, which is normally updated via the `form.validate` method, so in effect they return results based on the last time the form was validated. This allows you to control when validation happens without giving up the ability to reactively display validation errors.**
+
+* `form.errors()` - Get all errors in the errors collection.
+
+```js
+form.errors() // -> [{name: 'firstName', error: new Error(), message: 'must be a string'}]
+```
+
+* `form.errors(fieldName)` - Get all errors related to a particular field
+
+```js
+form.errors('firstName') // -> [{name: 'firstName', error: new Error(), message: 'must be a string'}]
+```
+
+* `form.errors(errors)` - Remove all existing errors and insert all the specified errors
+
+```js
+form.errors([{
+  name: 'firstName'
+  , error: new Error()
+  , message: "I don't like your name"
+}])
+form.errors() // -> [{name: 'firstName', error: new Error(), message: "I don't like your name"}]
+```
+
+* `form.errors(field, errors)` - Remove all existing errors related to a given field and insert all the specified errors. This method will set the name property of each error you insert to match the field you specified.
+
+```js
+form.errors('firstName', [{
+  error: new Error()
+  , message: "I don't like your name"
+}])
+form.errors() // -> [{name: 'firstName', error: new Error(), message: "I don't like your name"}]
+```
+
+* `form.error()` - Get the first error in the errors collection.
+
+```js
+form.error() // -> {name: 'firstName', error: new Error(), message: 'must be a string'}
+```
+
+* `form.error(field)` - Get the first error in the errors collection related to a given field.
+
+```js
+form.error('firstName') // -> {name: 'firstName', error: new Error(), message: 'must be a string'}
+```
+
+* `form.isValid()` - Return a boolean indicating the validity of the whole form.
+
+```js
+form.errors([]) // remove all errors
+form.isValid() // -> true, because there are no errors
+```
+
+* `form.isValid(field)` - Return a boolean indicating the validity of a given field.
+
+```js
+form.errors('firstName', [{}]) // insert an error
+form.isValid('firstName') // -> false, because we just inserted an error
+```
+
+* `form.isInvalid()` - Return a boolean indicating the non-validity of the whole form.
+
+```js
+form.errors([]) // remove all errors
+form.isInvalid() // -> false, because there are no errors
+```
+
+* `form.isInvalid(field)` - Return a boolean indicating the non-validity of a given field.
+
+```js
+form.errors('firstName', [{}]) // insert an error
+form.isInvalid('firstName') // -> true, because we just inserted an error
+```
+
+####Access Validation
+
+The Forms package will validate your document on submit, but you can also validate the form at any time by calling `form.validate()`
+
+* `form.validate()` - Validate the form and return a boolean indicating the validity of the form.
+
+```js
+form.validate() // -> true, if there are no errors
+```
+
+* `form.validate(field)` - Validate a given field and return a boolean indicating the validity of that field.
+
+```js
+form.validate('firstName') // -> true, if there are no errors
+```
+
+####Triggering Events
+
+The Forms package provides a rich set of events which make it easy for you to react to user input and state changes. (State changes which are triggered by a user action will result in emited events, state changes which are not triggered by a user action are still reactive, but generally do not result in emitted events.) 
+
+The Forms package uses it's own API to emit events, which mean all the event-emitting functionality is available to you as the app developer for customizing the way your forms behave.
+
+Each api method which emits events takes two optional arguments as the last two arguments:
+
+* `eventTarget` - The element which should emit the event, for example on `documentSubmit` the `form` element should be the eventTarget.
+* `originalEvent` - The originating event, for example the `change` event which triggers a `propertyChange` event. If you pass this argument, we will check `isDefaultPrevented` and call `preventDefault` to ensure that you don't handle the same event multiple times.
+
+If you don't pass `eventTarget` then none of the following methods will actually trigger an  event, instead they act as aliases for other methods on the api.
+
+* `form.validate(eventTarget, [originalEvent])` - Validates the document and triggers `documentInvalid` if the form is not valid.
+
+```js
+Template.myForm.events({
+  'click .validate': function (e, template) {
+    template.form.validate(e.currentTarget, e);
+    template.form.isValid(); // -> false if there are errors
+  }
+});
+```
+
+* `form.validate(fieldName, eventTarget, [originalEvent])` - Validates a field and triggers `propertyInvalid` if the field is not valid. Note that the `propertyInvalid` event won't get triggered unless you validate a field directly, calling `form.validate(eventTarget)` won't trigger any `propertyInvalid` events.
+
+```js
+Template.myForm.events({
+  'click .validate': function (e, template) {
+    template.form.validate('name', e.currentTarget, e);
+    template.form.isValid('name'); // -> false if there are errors
+  }
+});
+```
+
+* `form.invalidate(errors, eventTarget, [originalEvent])` - Marks the doc as invalid by inserting the specified errors and triggers `documentInvalid`. This method is equivilent to calling `form.errors` if you don't pass an `eventTarget`.
+
+```js
+Template.myForm.events({
+  'change': function (e, template) {
+    template.form.invalidate([{
+      message: 'This form is readonly!'
+    }], e.currentTarget, e);
+    template.form.isValid(); // -> false because you just inserted an error
+  }
+});
+```
+
+* `form.invalidate(fieldName, errors, eventTarget, [originalEvent])` - Marks the field as invalid by inserting the specified errors and triggers `propertyInvalid`.
+
+```js
+Template.myForm.events({
+  'change': function (e, template) {
+    template.form.invalidate('name', [{
+      message: 'This form is readonly!'
+    }], e.currentTarget, e);
+    template.form.isValid('name'); // -> false because you just added an error
+  }
+});
+```
+
+* `form.change(fieldName, fieldValue, eventTarget, [originalEvent])` - Updates the value of a field on the doc, by setting `doc[fieldName] = fieldValue`, then triggers `documentChange`. This method is equivilent to calling `form.set` if you don't pass an `eventTarget`.
+
+```js
+Template.myForm.events({
+  'click .toggle': function (e, template) {
+    var name = e.currentTarget.name;
+    var value = template.form.doc(name);
+    template.form.change(name, !value, e.currentTarget, e);
+    // updates the doc and triggers `documentChange`
+  }
+});
+```
+
+* `form.change(changes, eventTarget, [originalEvent])` - Updates the value of multiple fields in the doc, by setting` doc[key] = value` for each key in `changes`. This method only calls `documentChange` once.
+
+```js
+Template.myForm.events({
+  'click .toggle': function (e, template) {
+    var name = e.currentTarget.name;
+    var value = template.form.doc(name);
+    template.form.change(name, !value, e.currentTarget, e);
+    // updates the doc and triggers `documentChange`
+  }
+});
+```
+
+* `form.submit(eventTarget, [originalEvent])` - Validates the document and triggers either `documentSubmit` or `documentInvalid` as a result
+
+```js
+Template.myForm.events({
+  'click .done': function (e, template) {
+    template.form.submit(e.currentTarget, e);
+    // triggers `documentSubmit` or `documentInvalid`
+  }
+});
+```
+
+###Forms Events
+
+The Forms package emits events so you can take action when things change. Events are emitted by the Forms package either as a result of some user action which we catch (via `submit` or `change` events), or as a result of some custom event which you trigger, either via the `propertyChange` event, or by using the event emitting api methods above.
+
+```js
+Template.myForm.events({
+  'propertyChange': function (e, tmpl, changes) {
+    // This event is the only event which is not triggered using our api
+    // instead we trigger this event in response to `change` events so that
+    // we can handle both user initiated `change` events and developer
+    // initiated `propertyChange` events using a single unified handler and api
+    // See the source code for more info: lib/forms.js:444
+    
+    // If you want to be notified of property changes, you should use the
+    // documentChange event below.
+  }
+  , 'documentChange': function (e, tmpl, doc, changes) {
+    // This event is triggered whenever the doc is updated via `form.change`
+    // doc contains the updated doc, including any changes made
+    // changes contains only the properties which were updated
+  }
+  , 'propertyInvalid': function (e, tmpl, doc, errors) {
+    // This event is triggered when the developer calls
+    // `form.validate(fieldName)` or `form.invalidate(fieldName)`
+    // errors is an array of relevant errors
+  }
+  , 'documentInvalid': function (e, tmpl, doc, errors) {
+    // This event is triggered when the document is invalidated via an event
+    // There are quite a few ways this could be triggered:
+    // - `submit` event
+    // - `form.invalidate`
+    // - `form.validate`
+    // - `form.submit`
+  }
+  , 'documentSubmit': function (e, tmpl, doc) {
+    // This event is triggered either via the `submit` event or by calling
+    // `form.submit`, but in both cases only if the document is valid
+  }
+})
+```
+
+Each of the events we list above (with the exception of `propertyChange`) is emitted via our own API, which means when you call any of the methods in [Triggering Events](#triggering-events) your code will emit events in a manner that is consistent with the way that native Forms code emits events.
+
+Important Note about `propertyChange`: In general we recommend interacting with the Forms package through the API, however you might find yourself building a custom component where it's tricky to get the form instance, (e.g. when writing a custom component), in these cases the `propertyChange` event makes it easy for you to trigger changes to the underlying state of the form just use `$(myDomElement).trigger('propertyChange', { key: value })` to let the form instance know that things have changed.
 
 
-## Handled Events
+###Events which are handled by Forms
 ------------
 
-The forms package handles the following events, all event handlers are simply passthrough methods to the relevant form helpers, like so:
+The Forms package tries to be as minimally-invasive as possible, so we don't handle a whole crowd of events, but to make it really easy to handle most use cases, we do handle 3 events by default.
 
-* `change input, change textarea` -> `form.change({[e.currentTarget.name]: e.currentTarget.value}, e.currentTarget, e);`
-* `propertyChange` `form.change(changes, e.currentTarget, e);`
-* `submit` -> `form.submit(e.currentTarget, e);`
+```js
+// Read the source code, it's only 10 lines longer than this explanation :)
+Forms.events({
+  'change input, change textarea, change select': function (e, tmpl) {
+    // Creates an object `changes` and triggers 'propertyChange' with
+    // `changes` as the first argument
+    }
+  }
+  , 'propertyChange': function (e, tmpl, changes) {
+    // calls form.change passing in `changes` as the first argument
+    // notice that this event is triggered by the `change` event
+  }
+  , 'submit': function (e, tmpl) {
+    // calls form.submit
+  }
+});
+```
+
+Note: If you're doing something custom and don't want these events, you can pass `events: false` like this: `Forms.mixin(Template.customForm, { events: false })`
+
