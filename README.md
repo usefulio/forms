@@ -87,6 +87,132 @@ API Docs
 
 * `Forms.instance()` This method is available globally and is an alias for `Template.instance().form` but will return `null` if `Template.instance()` is `null`.
 
+###Template helpers
+
+Forms adds helpers to your template to make it easy to display document properties and errors directly in your form.
+
+- `{{doc}}` Returns the doc, you can use this to access any property on the doc.
+
+    ```html
+    <input name="first" type="text" value="{{doc.name}}">
+    ```
+
+- `{{doc 'fieldName'}}` Returns an individual field, once we implement deep object access, this helper is equivalent to using `{{doc.fieldName}}`, but since it's a method you can pass a variable as the argument.
+
+    ```html
+    <input name={{field}} type="text" value={{doc field}}>
+    ```
+
+- `{{original}}` Gets the unmodified original doc, without any changes which have taken place since.
+
+    ```html
+    <p>Change: {{original.first}} to {{doc.first}}?</p>
+    ```
+
+- `{{original 'fieldName'}}` Gets an individual field from the original doc
+
+    ```html
+    <p>Change: {{original 'first'}} to {{doc 'first'}}?</p>
+    ```
+
+- `{{schema}}` Gets the schema
+
+    ```html
+    <p>{{#if schema}}This document must conform to a schema{{/if}}</p>
+    ```
+
+- `{{schema 'fieldName'}}` Gets an individual field from the schema
+
+    ```html
+    <p>{{#if schema 'firstName'}}First name has a schema{{/if}}</p>
+    ```
+
+>    **Note: we expect to change the way validation works in the future and may deprecate this helper**
+
+- `{{errors}}` Returns all errors which exist in the form
+
+    ```html
+    {{#each errors}}
+        <p class="error">{{message}}</p>
+    {{/each}}
+    ```
+
+- `{{errors 'fieldName'}}` Returns all errors related to a given field
+
+    ```html
+    {{#each errors 'firstName'}}
+        <p class="error">First name is invalid: {{message}}</p>
+    {{/each}}
+    ```
+
+- `{{error}}` Returns the first error which exists in the form
+
+    ```html
+    {{#with error}}
+      <p class="error">Form is invalid: {{message}}</p>
+    {{/with}}
+    ```
+
+- `{{error 'fieldName'}}` Returns the first error related to a given field
+
+    ```html
+    {{#with error 'firstName'}}
+      <p class="error">First name is invalid: {{message}}</p>
+    {{/with}}
+    ```
+
+- `{{errorMessage}}` Returns the message of the first error  which exists in the form
+
+    ```html
+    <p class="error">{{errorMessage}}</p>
+    ```
+
+- `{{errorMessage 'fieldName'}}` Returns the message of the first error related to a given field
+
+    ```html
+    <p class="error">{{errorMessage 'firstName'}}</p>
+    ```
+
+- `{{isValid}}` Returns true if the form is valid (there are 0 errors) and false otherwise.
+
+    ```html
+    {{#if isValid}}
+      <p>Everything is good, submit at will!</p>
+    {{/if}}
+    ```
+
+- `{{isValid 'fieldName'}}` Returns true if the field is valid (there are 0 errors) and false otherwise.
+
+    ```html
+    {{#if isValid 'username'}}
+      <p>All clear! You can use this username :)</p>
+    {{/if}}
+    ```
+
+- `{{isInvalid}}` Returns true if the form is invalid (there are errors) and false otherwise.
+
+    ```html
+    {{#if isInvalid}}
+      <p class="error">Please fix the validation errors and try again!</p>
+    {{/if}}
+    ```
+
+- `{{isInvalid 'fieldName'}}` Returns true if the field is invalid (there are errors) and false otherwise.
+
+    ```html
+    {{#if isInvalid 'username'}}
+      <p class="error">
+        Uh-oh! Looks like there's a problem with the username you entered!
+      </p>
+    {{/if}}
+    ```
+
+- `{{form}}` Returns an object with all of the Forms helpers bound to the current forms instance, useful for passing to components.
+
+    ```html
+    {{> datePicker field="reservationDate" form=form}}
+    ```
+
 ###Template form instance
 
 Template instances are extended with a form instance which provides full access to the underlying state of the form.
