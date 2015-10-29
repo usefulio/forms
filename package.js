@@ -1,6 +1,6 @@
 Package.describe({
 	name: 'useful:forms',
-	version: '1.0.3',
+	version: '1.0.4',
 	summary: 'Fully reactive forms which don\'t mess with your html',
 	git: 'https://github.com/usefulio/forms',
 	documentation: 'README.md'
@@ -16,6 +16,7 @@ Package.onUse(function(api) {
 		'templating'
 		, 'underscore'
 		, 'check'
+		, 'tracker'
 	], ['client', 'server']);
 
 	api.use([
@@ -41,7 +42,7 @@ Package.onUse(function(api) {
 
 	// ====== EXPORTS =======
 
-	api.export('Forms');
+	api.export('Forms', 'client');
 });
 
 Package.onTest(function(api) {
