@@ -349,10 +349,49 @@ Tinytest.add('Forms - Forms.instance().doc - throws on invalid arguments', funct
   test.throws(function () {
     formInstance.doc('');
   });
+});
 
-  test.throws(function () {
-    formInstance.doc(null);
+Tinytest.add('Forms - Forms.instance().doc - getters & setters can be overridden', function (test) {
+  var template = makeTemplate('simpleForm');
+  var didFire = 0;
+  var formInstance;
+  Forms.mixin(template);
+  Forms._utils._doc = {
+    get: function () {
+      return '1';
+    }
+    , set: function (doc, propertyName, value) {
+      didFire++;
+      doc[propertyName] = value;
+    }
+  };
+  template.helpers({
+    value: function () {
+      formInstance = Forms.instance();
+
+      test.equal(formInstance.doc('iteration'), '1');
+
+      didFire++;
+    }
+    , error: function () {}
   });
+  var dom = makeForm(template, function () {
+    return {
+      doc: {
+        iteration: 0
+      }
+    };
+  });
+  formInstance.doc('iteration', 1);
+  // Tracker.flush() is necessary because dep.changed does not trigger an 
+  // immediate rerun of computations, this ensures that our helper above
+  // runs the second time synchronously
+  Tracker.flush();
+  test.equal(didFire, 3);
+  test.equal(formInstance.doc(), {
+    iteration: 1
+  });
+  delete Forms._utils._doc;
 });
 
 Tinytest.add('Forms - Forms.instance().schema - returns a reactive clone of this.schema', function (test) {
