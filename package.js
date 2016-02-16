@@ -15,6 +15,7 @@ Package.onUse(function(api) {
 	api.use([
 		'templating'
 		, 'underscore'
+		, 'check'
 	], ['client', 'server']);
 
 	api.use([
