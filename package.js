@@ -17,6 +17,7 @@ Package.onUse(function(api) {
 		, 'underscore'
 		, 'check'
 		, 'tracker'
+		, 'ejson'
 	], ['client', 'server']);
 
 	api.use([
