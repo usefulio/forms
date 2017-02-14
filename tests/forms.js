@@ -1663,11 +1663,9 @@ Tinytest.add('Forms - template tests - simple form', function (test) {
   Forms.mixin(template);
   var div = makeForm(template, { doc: { name: 'myname' } }).div;
   var expected = { name: 'myname' };
-  
+
   var didChange = false;
   var didSubmit = false;
-  div.find('input').trigger('change');
-  test.equal(didChange, true);
 
   expected.name = 'othername';
   didChange = false;
@@ -1698,11 +1696,9 @@ Tinytest.add('Forms - template tests - complex form', function (test) {
   Forms.mixin(template);
   var div = makeForm(template, { doc: { name: 'myname' } }).div;
   var expected = { name: 'myname' };
-  
+
   var didChange = false;
   var didSubmit = false;
-  div.find('input').trigger('change');
-  test.equal(didChange, true);
 
   expected.name = 'othername';
   didChange = false;
