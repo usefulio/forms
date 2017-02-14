@@ -1,6 +1,6 @@
 Package.describe({
-	name: 'useful:forms',
-	version: '1.1.0',
+	name: 'ohlman:forms',
+	version: '1.2.0',
 	summary: 'Fully reactive forms which don\'t mess with your html',
 	git: 'https://github.com/usefulio/forms',
 	documentation: 'README.md'
@@ -48,7 +48,7 @@ Package.onUse(function(api) {
 
 Package.onTest(function(api) {
 	api.use('tinytest');
-	api.use('useful:forms');
+	api.use('ohlman:forms');
 	api.use([
 		'templating'
 		, 'underscore'
