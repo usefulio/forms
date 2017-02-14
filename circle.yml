@@ -1,0 +1,17 @@
+dependencies:
+  cache_directories:
+    - ~/.meteor
+  override:
+    - meteor || curl https://install.meteor.com | /bin/sh
+    - npm install -g spacejam
+
+test:
+  override:
+    - spacejam test-packages ./
+
+deployment:
+  # tag: /v[0-9]+(\.[0-9]+)*/ # Any version tag
+  # branch: master
+  owner: ohlmanio
+  commands:
+    - echo "deploy"
