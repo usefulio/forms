@@ -9,9 +9,9 @@ test:
   override:
     - spacejam test-packages ./
 
-deployment:
+# deployment:
   # tag: /v[0-9]+(\.[0-9]+)*/ # Any version tag
   # branch: master
   # owner: ohlmanio
-  commands:
-    - echo "deploy"
+  # commands:
+    # - echo "deploy"
