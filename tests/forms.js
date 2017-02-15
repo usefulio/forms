@@ -1393,6 +1393,71 @@ Tinytest.add('Forms - Forms.instance().validate - runs schema validation and tri
   test.equal(didFire, true);
 });
 
+Tinytest.add('Forms - Forms.instance().validate - runs schema on sub-documents and triggers documentInvalid', function (test) {
+  var template = makeTemplate('simpleForm');
+  Forms.mixin(template);
+  template.helpers({ value: function () { } });
+  template.events({
+    'customEvent': function (e, tmpl) {
+      var form = Forms.instance();
+      var errors = form.validate(e.currentTarget);
+      checkEntities(test, errors, [{name: 'field.other', message: 'invalid'}]);
+    }
+    , 'documentInvalid': function (e, tmpl, doc, errors) {
+      test.equal(doc, {
+        field: {
+          other: 'otherValue'
+        }
+      });
+      checkEntities(test, errors, [{name: 'field.other', message: 'invalid'}]);
+      didFire = true;
+    }
+  });
+  var div = makeForm(template, {
+    doc: {
+      field: {
+        other: 'otherValue'
+      }
+    }
+    , schema: {
+      "field.other": function () {
+        return 'invalid';
+      }
+    }
+  }).div;
+  var didFire = false;
+  div.find('input').trigger('customEvent');
+  test.equal(didFire, true);
+});
+
+Tinytest.add('Forms - Forms.instance().validate - runs schema on sub-documents and doesn\'t trigger documentInvalid', function (test) {
+  var template = makeTemplate('simpleForm');
+  Forms.mixin(template);
+  template.helpers({ value: function () { } });
+  template.events({
+    'customEvent': function (e, tmpl) {
+      var form = Forms.instance();
+      var errors = form.validate(e.currentTarget);
+      checkEntities(test, errors, []);
+    }
+  });
+  var div = makeForm(template, {
+    doc: {
+      field: {
+        other: 'otherValue'
+      }
+    }
+    , schema: {
+      "field.other": function (value) {
+        return value === 'otherValue' || 'invalid';
+      }
+    }
+  }).div;
+  var didFire = false;
+  div.find('input').trigger('customEvent');
+  test.equal(didFire, false);
+});
+
 Tinytest.add('Forms - Forms.instance().submit - validates document and triggers documentSubmit', function (test) {
   var template = makeTemplate('simpleForm');
   Forms.mixin(template);
@@ -1598,11 +1663,9 @@ Tinytest.add('Forms - template tests - simple form', function (test) {
   Forms.mixin(template);
   var div = makeForm(template, { doc: { name: 'myname' } }).div;
   var expected = { name: 'myname' };
-  
+
   var didChange = false;
   var didSubmit = false;
-  div.find('input').trigger('change');
-  test.equal(didChange, true);
 
   expected.name = 'othername';
   didChange = false;
@@ -1633,11 +1696,9 @@ Tinytest.add('Forms - template tests - complex form', function (test) {
   Forms.mixin(template);
   var div = makeForm(template, { doc: { name: 'myname' } }).div;
   var expected = { name: 'myname' };
-  
+
   var didChange = false;
   var didSubmit = false;
-  div.find('input').trigger('change');
-  test.equal(didChange, true);
 
   expected.name = 'othername';
   didChange = false;
