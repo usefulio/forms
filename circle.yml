@@ -13,6 +13,9 @@ deployment:
   release:
     tag: /v[0-9]+(\.[0-9]+)*/ # Any version tag
     owner: ohlmanio
+    commands:
+      - echo $METEOR_TOKEN_ENCODED | base64 --decode > meteor_login_token.json
+      - METEOR_SESSION_FILE=meteor_login_token.json meteor publish
 
   test:
     branch: next
