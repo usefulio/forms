@@ -1,6 +1,6 @@
 Package.describe({
 	name: 'useful:forms',
-	version: '1.1.1',
+	version: '1.1.3',
 	summary: 'Fully reactive forms which don\'t mess with your html',
 	git: 'https://github.com/usefulio/forms',
 	documentation: 'README.md'
